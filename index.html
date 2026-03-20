@@ -1109,7 +1109,7 @@
         if (section === 'market' || !section) {
           MOCK_MARKET = data.market || [];
           if (apiData) {
-            const updateItem = (label, value) => {
+            const updateFredItem = (label, value) => {
               const idx = MOCK_MARKET.findIndex(m => m.label === label);
               if (idx > -1) {
                 MOCK_MARKET[idx].value = value + "%";
@@ -1122,9 +1122,33 @@
                 });
               }
             };
-            updateItem("미국 10Y", apiData.us10y);
-            updateItem("장단기금리차", apiData.spread);
-            updateItem("연준 기준금리", apiData.fedfunds);
+            updateFredItem("미국 10Y", apiData.us10y);
+            updateFredItem("장단기금리차", apiData.spread);
+            updateFredItem("연준 기준금리", apiData.fedfunds);
+
+            const updateYahooItem = (label, yData) => {
+              if (!yData) return;
+              const idx = MOCK_MARKET.findIndex(m => m.label === label);
+              if (idx > -1) {
+                MOCK_MARKET[idx].value = yData.price;
+                MOCK_MARKET[idx].change = yData.change;
+                MOCK_MARKET[idx].raw = yData.raw;
+                if (!MOCK_MARKET[idx].sub.includes('LIVE')) {
+                  // sub 라벨 텍스트에 LIVE 추가
+                  MOCK_MARKET[idx].sub += " · LIVE";
+                }
+              }
+            };
+
+            if (apiData.market) {
+              updateYahooItem("S&P 500", apiData.market.sp500);
+              updateYahooItem("NASDAQ", apiData.market.nasdaq);
+              updateYahooItem("VIX", apiData.market.vix);
+              updateYahooItem("달러인덱스", apiData.market.dxy);
+              updateYahooItem("달러/원", apiData.market.krw);
+              updateYahooItem("WTI 원유", apiData.market.wti);
+              updateYahooItem("금", apiData.market.gold);
+            }
           }
         }
         if (section === 'prob' || !section) {
