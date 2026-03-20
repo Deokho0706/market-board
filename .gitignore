@@ -2,3 +2,7 @@ node_modules/
 .DS_Store
 modify_html.py
 *.png
+.env.local
+
+.vercel
+.env*.local
