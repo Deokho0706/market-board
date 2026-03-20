@@ -1,0 +1,12 @@
+{
+  "name": "market-board",
+  "version": "1.0.0",
+  "description": "Market Board Dashboard",
+  "scripts": {
+    "dev": "serve .",
+    "start": "serve ."
+  },
+  "dependencies": {
+    "serve": "^14.2.0"
+  }
+}
