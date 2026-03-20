@@ -1,0 +1,43 @@
+=== 1. RECESSION MARKETS ===
+Q: Will Joe Biden get Coronavirus before the election?
+Slug: will-joe-biden-get-coronavirus-before-the-election
+ConditionId: 0xe3b423dfad8c22ff75c9899c4e8176f628cf4ad4caa00481764d320e7415f7a9
+
+Q: Will Airbnb begin publicly trading before Jan 1, 2021?
+Slug: will-airbnb-begin-publicly-trading-before-jan-1-2021
+ConditionId: 0x44f10d1cd5aaed4b7ae0b5edb76790f54f45dc0bcaa86831c83d865c774fbb90
+
+Q: Will a new Supreme Court Justice be confirmed before Nov 3rd, 2020?
+Slug: will-a-new-supreme-court-justice-be-confirmed-before-nov-3rd-2020
+ConditionId: 0x3e0524de013d9dc359f5eb370773f25de2f03d3200294cfd0fa7dac2f399d101
+
+Q: Will Kim Kardashian and Kanye West divorce before Jan 1, 2021?
+Slug: will-kim-kardashian-and-kanye-west-divorce-before-jan-1-2021
+ConditionId: 0x9b946f54f3428aafc308c33aa04a943fe13a011bdac9a9b66e1ba16c416ca256
+
+Q: Will Coinbase begin publicly trading before Jan 1, 2021?
+Slug: will-coinbase-begin-publicly-trading-before-jan-1-2021
+ConditionId: 0x5d1a1ab716fd06943441fe27cde0089651ce769bec55e191b6953468a0e9f0d0
+
+
+=== 2. FED RATE CUT MARKETS ===
+Q: Will Joe Biden get Coronavirus before the election?
+Slug: will-joe-biden-get-coronavirus-before-the-election
+ConditionId: 0xe3b423dfad8c22ff75c9899c4e8176f628cf4ad4caa00481764d320e7415f7a9
+
+Q: Will Airbnb begin publicly trading before Jan 1, 2021?
+Slug: will-airbnb-begin-publicly-trading-before-jan-1-2021
+ConditionId: 0x44f10d1cd5aaed4b7ae0b5edb76790f54f45dc0bcaa86831c83d865c774fbb90
+
+Q: Will a new Supreme Court Justice be confirmed before Nov 3rd, 2020?
+Slug: will-a-new-supreme-court-justice-be-confirmed-before-nov-3rd-2020
+ConditionId: 0x3e0524de013d9dc359f5eb370773f25de2f03d3200294cfd0fa7dac2f399d101
+
+Q: Will Kim Kardashian and Kanye West divorce before Jan 1, 2021?
+Slug: will-kim-kardashian-and-kanye-west-divorce-before-jan-1-2021
+ConditionId: 0x9b946f54f3428aafc308c33aa04a943fe13a011bdac9a9b66e1ba16c416ca256
+
+Q: Will Coinbase begin publicly trading before Jan 1, 2021?
+Slug: will-coinbase-begin-publicly-trading-before-jan-1-2021
+ConditionId: 0x5d1a1ab716fd06943441fe27cde0089651ce769bec55e191b6953468a0e9f0d0
+

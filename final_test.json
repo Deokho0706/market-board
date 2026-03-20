@@ -1,0 +1,19 @@
+{
+  "us10y": "4.26",
+  "us2y": "3.76",
+  "spread": "0.50",
+  "fedfunds": "3.64",
+  "polymarket": {
+    "recession": {
+      "yes": 36,
+      "no": 65,
+      "title": "US recession by end of 2026?"
+    },
+    "fed_cuts_2026": {
+      "zero": 0,
+      "one": 0,
+      "two": 0,
+      "title": "How many Fed rate cuts in 2026?"
+    }
+  }
+}
