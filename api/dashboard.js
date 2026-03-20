@@ -1,3 +1,9 @@
+import yf from 'yahoo-finance2';
+const yahooFinance = new yf();
+if (yahooFinance.suppressNotices) {
+  yahooFinance.suppressNotices(['yahooSurvey']);
+}
+
 export default async function handler(req, res) {
   const API_KEY = process.env.FRED_API_KEY;
 
@@ -77,17 +83,47 @@ export default async function handler(req, res) {
     }
   };
 
+  const getYahooData = async (ticker, noDecimals = false) => {
+    try {
+      const quote = await yahooFinance.quote(ticker);
+      const price = quote.regularMarketPrice;
+      const change = quote.regularMarketChangePercent || 0;
+      
+      if (price === undefined) return null;
+
+      return {
+        price: price.toLocaleString('en-US', { 
+          minimumFractionDigits: noDecimals ? 0 : 2, 
+          maximumFractionDigits: noDecimals ? 0 : 2 
+        }),
+        change: change > 0 ? `+${change.toFixed(2)}%` : `${change.toFixed(2)}%`,
+        raw: parseFloat(change.toFixed(2))
+      };
+    } catch(err) {
+      console.error(`Yahoo Finance Error for ${ticker}:`, err);
+      return null;
+    }
+  };
+
   try {
-    const [us10y, us2y, fedfunds, polymarket] = await Promise.all([
+    const [us10y, us2y, fedfunds, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold] = await Promise.all([
       getLatestValue('DGS10'),
       getLatestValue('DGS2'),
       getLatestValue('FEDFUNDS'),
-      getPolymarketData()
+      getPolymarketData(),
+      getYahooData('^GSPC', true),
+      getYahooData('^IXIC', true),
+      getYahooData('^VIX', false),
+      getYahooData('DX-Y.NYB', false),
+      getYahooData('KRW=X', true),
+      getYahooData('CL=F', false),
+      getYahooData('GC=F', true)
     ]);
 
     const spread = us10y - us2y;
 
     res.status(200).json({
+      market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
       us10y: us10y.toFixed(2),
       us2y: us2y.toFixed(2),
       spread: spread.toFixed(2),

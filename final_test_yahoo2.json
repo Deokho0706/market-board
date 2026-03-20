@@ -1,0 +1,56 @@
+{
+  "market": {
+    "sp500": {
+      "price": "6,506",
+      "change": "-1.51%",
+      "raw": -1.51
+    },
+    "nasdaq": {
+      "price": "21,648",
+      "change": "-2.01%",
+      "raw": -2.01
+    },
+    "vix": {
+      "price": "26.78",
+      "change": "+11.31%",
+      "raw": 11.31
+    },
+    "dxy": {
+      "price": "99.50",
+      "change": "+0.27%",
+      "raw": 0.27
+    },
+    "krw": {
+      "price": "1,505",
+      "change": "+0.70%",
+      "raw": 0.7
+    },
+    "wti": {
+      "price": "98.09",
+      "change": "+2.66%",
+      "raw": 2.66
+    },
+    "gold": {
+      "price": "4,492",
+      "change": "-2.47%",
+      "raw": -2.47
+    }
+  },
+  "us10y": "4.25",
+  "us2y": "3.79",
+  "spread": "0.46",
+  "fedfunds": "3.64",
+  "polymarket": {
+    "recession": {
+      "yes": 35,
+      "no": 66,
+      "title": "US recession by end of 2026?"
+    },
+    "fed_cuts_2026": {
+      "zero": 34,
+      "one": 26,
+      "two": 19,
+      "title": "How many Fed rate cuts in 2026?"
+    }
+  }
+}
