@@ -1091,40 +1091,72 @@
     const CACHE_TTL = { market: 90000, prob: 900000, news: 1800000 }; // ms
 
     // FIX: simulateFetch 대신 실제 fetch 연동
+    // FIX: simulateFetch 대신 실제 fetch 연동
     async function simulateFetch(section) {
       try {
         const res = await fetch('./data.json');
         if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
+
+        let apiData = null;
+        try {
+          const apiRes = await fetch('/api/dashboard');
+          if (apiRes.ok) apiData = await apiRes.json();
+        } catch(err) {
+          console.error('API error:', err);
+        }
         
         if (section === 'market' || !section) {
           MOCK_MARKET = data.market || [];
-          try {
-            const apiRes = await fetch('/api/dashboard');
-            if (apiRes.ok) {
-              const apiData = await apiRes.json();
-              const updateItem = (label, value) => {
-                const idx = MOCK_MARKET.findIndex(m => m.label === label);
-                if (idx > -1) {
-                  MOCK_MARKET[idx].value = value + "%";
-                  MOCK_MARKET[idx].change = "LIVE";
-                  MOCK_MARKET[idx].sub = "FRED 실시간";
-                  MOCK_MARKET[idx].raw = 0; // neutral class
-                } else {
-                  MOCK_MARKET.push({
-                    label, value: value + "%", change: "LIVE", raw: 0, sub: "FRED 실시간"
-                  });
-                }
-              };
-              updateItem("미국 10Y", apiData.us10y);
-              updateItem("장단기금리차", apiData.spread);
-              updateItem("연준 기준금리", apiData.fedfunds);
-            }
-          } catch(err) {
-            console.error('FRED API error:', err);
+          if (apiData) {
+            const updateItem = (label, value) => {
+              const idx = MOCK_MARKET.findIndex(m => m.label === label);
+              if (idx > -1) {
+                MOCK_MARKET[idx].value = value + "%";
+                MOCK_MARKET[idx].change = "LIVE";
+                MOCK_MARKET[idx].sub = "FRED 실시간";
+                MOCK_MARKET[idx].raw = 0; // neutral class
+              } else {
+                MOCK_MARKET.push({
+                  label, value: value + "%", change: "LIVE", raw: 0, sub: "FRED 실시간"
+                });
+              }
+            };
+            updateItem("미국 10Y", apiData.us10y);
+            updateItem("장단기금리차", apiData.spread);
+            updateItem("연준 기준금리", apiData.fedfunds);
           }
         }
-        if (section === 'prob' || !section) MOCK_PROB = data.probability || [];
+        if (section === 'prob' || !section) {
+          MOCK_PROB = data.probability || [];
+          if (apiData && apiData.polymarket) {
+            const recIdx = MOCK_PROB.findIndex(p => p.title.includes('경기침체 진입') || p.title.includes('경기침체'));
+            if (recIdx > -1) {
+              MOCK_PROB[recIdx].yes = apiData.polymarket.recession.yes;
+              MOCK_PROB[recIdx].no = apiData.polymarket.recession.no;
+              MOCK_PROB[recIdx].src = "Polymarket · LIVE";
+            }
+
+            const fedIdx = MOCK_PROB.findIndex(p => p.title.includes('금리 인하 횟수') || p.title.includes('기준금리 수준'));
+            const fedObj = {
+              type: "multi",
+              title: "연준 2026년 금리 인하 횟수",
+              outcomes: [
+                { label: "0회 (동결)", pct: apiData.polymarket.fed_cuts_2026.zero },
+                { label: "1회 (25bp)", pct: apiData.polymarket.fed_cuts_2026.one },
+                { label: "2회 (50bp)", pct: apiData.polymarket.fed_cuts_2026.two }
+              ],
+              other: Math.max(0, 100 - (apiData.polymarket.fed_cuts_2026.zero + apiData.polymarket.fed_cuts_2026.one + apiData.polymarket.fed_cuts_2026.two)),
+              src: "Polymarket · LIVE"
+            };
+
+            if (fedIdx > -1) {
+              MOCK_PROB[fedIdx] = fedObj;
+            } else {
+               MOCK_PROB.push(fedObj);
+            }
+          }
+        }
         if (section === 'news' || !section) MOCK_NEWS = data.news || [];
       } catch (e) {
         console.error('Data fetch error:', e);
