@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>마켓 확률 보드</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <script type="module" crossorigin src="/assets/index-DhluE-ur.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BTWcRkFf.css">
+</head>
+
+<body>
+  <div class="wrap">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo">MARKET<span>·</span>BOARD</div>
+      <div class="header-meta">
+        <div class="live-badge">
+          <div class="live-dot"></div>
+          수동 갱신 모드
+        </div>
+        <div class="ts">마지막 갱신: <span id="ts-val">—</span></div>
+        <button class="btn-reload" id="btn-all" onclick="reloadAll()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          전체 새로고침
+        </button>
+      </div>
+    </header>
+
+    <!-- SECTION A: MARKET -->
+    <div class="section-head">
+      <div class="section-title">시장 지표</div>
+      <!-- FIX: .section-ctrl 클래스로 인라인 스타일 제거 -->
+      <div class="section-ctrl">
+        <span class="section-ts" id="ts-market">—</span>
+        <!-- FIX: 각 버튼에 id 부여 → JS에서 스피너 상태 관리 가능 -->
+        <button class="btn-reload" id="btn-market" onclick="reloadSection('market')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          갱신
+        </button>
+      </div>
+    </div>
+    <div class="cards-grid" id="market-grid"></div>
+
+    <!-- SECTION B: PROBABILITY -->
+    <div class="section-head">
+      <div class="section-title">시장 암시 확률</div>
+      <div class="section-ctrl">
+        <span class="section-ts" id="ts-prob">—</span>
+        <button class="btn-reload" id="btn-prob" onclick="reloadSection('prob')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          갱신
+        </button>
+      </div>
+    </div>
+    <div class="prob-grid" id="prob-grid"></div>
+
+    <!-- SECTION C: NEWS -->
+    <div class="section-head">
+      <div class="section-title">핵심 사건 / 이슈</div>
+      <div class="section-ctrl">
+        <span class="section-ts" id="ts-news">—</span>
+        <button class="btn-reload" id="btn-news" onclick="reloadSection('news')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          갱신
+        </button>
+      </div>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+
+    <!-- SECTION D: CHARTS -->
+    <div class="section-head">
+      <div class="section-title">주요 차트</div>
+      <!-- FIX: 차트 섹션에도 타임스탬프 + 갱신 버튼 추가 -->
+      <div class="section-ctrl">
+        <span class="section-ts" id="ts-chart">—</span>
+        <button class="btn-reload" id="btn-chart" onclick="reloadCharts()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+            <path d="M8 16H3v5" />
+          </svg>
+          갱신
+        </button>
+      </div>
+    </div>
+    <div class="chart-grid" id="chart-grid"></div>
+
+    <!-- DISCLAIMER -->
+    <div class="disclaimer">
+      <strong>⚠ 유의사항</strong> · 이 대시보드는 시장 모니터링 참고용이며 투자 권유가 아닙니다.
+      확률 수치는 예측시장(Polymarket · CME FedWatch)의 <strong>시장 암시 확률</strong>이며 실제 결과를 보장하지 않습니다.
+      현재 표시된 데이터는 <strong>목업(Mock) 데이터</strong>입니다 — API 연동 전입니다.
+    </div>
+
+  </div>
+
+</body>
+</html>

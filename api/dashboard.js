@@ -8,7 +8,8 @@ export default async function handler(req, res) {
   const API_KEY = process.env.FRED_API_KEY;
 
   if (!API_KEY) {
-    return res.status(500).json({ error: 'FRED_API_KEY 설정이 누락되었습니다.' });
+    console.error('[dashboard] missing required env var: FRED_API_KEY');
+    return res.status(500).json({ error: '서비스 설정을 확인 중입니다.' });
   }
 
   const getLatestValue = async (seriesId) => {
@@ -135,7 +136,7 @@ export default async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("API Error:", error);
-    res.status(500).json({ error: '데이터를 가져오는 중 오류가 발생했습니다.' });
+    console.error('[dashboard] internal error:', error);
+    res.status(500).json({ error: '데이터를 불러오는 중 오류가 발생했습니다.' });
   }
 }
