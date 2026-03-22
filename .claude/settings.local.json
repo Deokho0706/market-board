@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls *.json)",
+      "Bash(ls *.txt)",
+      "Bash(ls test_*.js test_*.mjs)",
+      "Bash(ls update_*.py)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm install:*)",
+      "Bash(node -e \"const p=require\\(''./node_modules/serve/package.json''\\); console.log\\(JSON.stringify\\(p.bin\\)\\)\")"
+    ]
+  }
+}
