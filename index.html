@@ -1094,7 +1094,7 @@
     // FIX: simulateFetch 대신 실제 fetch 연동
     async function simulateFetch(section) {
       try {
-        const res = await fetch('./data.json');
+        const res = await fetch('./src/data/seed.json');
         if (!res.ok) throw new Error('Fetch failed');
         const data = await res.json();
 
