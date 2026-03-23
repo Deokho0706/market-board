@@ -13,12 +13,19 @@ export default async function handler(req, res) {
   }
 
   const getLatestValue = async (seriesId) => {
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${API_KEY}&file_type=json&sort_order=desc&limit=5`;
-    const response = await fetch(url);
-    if (!response.ok) throw new Error(`FRED API fetch failed for ${seriesId}`);
-    const data = await response.json();
-    const obs = data.observations.find(o => o.value && o.value !== '.');
-    return obs ? parseFloat(obs.value) : 0;
+    try {
+      const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${API_KEY}&file_type=json&sort_order=desc&limit=5`;
+      const response = await fetch(url);
+      if (!response.ok) return null;
+      
+      const data = await response.json();
+      const obs = data.observations?.find(o => o.value && o.value !== '.');
+      
+      return obs ? parseFloat(obs.value) : null;
+    } catch (err) {
+      console.error(`FRED API Error for ${seriesId}:`, err);
+      return null;
+    }
   };
 
   const getPolymarketData = async () => {
@@ -121,14 +128,14 @@ export default async function handler(req, res) {
       getYahooData('GC=F', true)
     ]);
 
-    const spread = us10y - us2y;
+    const spread = (us10y !== null && us2y !== null) ? (us10y - us2y) : null;
 
     res.status(200).json({
       market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
-      us10y: us10y.toFixed(2),
-      us2y: us2y.toFixed(2),
-      spread: spread.toFixed(2),
-      fedfunds: fedfunds.toFixed(2),
+      us10y: us10y !== null ? us10y.toFixed(2) : null,
+      us2y: us2y !== null ? us2y.toFixed(2) : null,
+      spread: spread !== null ? spread.toFixed(2) : null,
+      fedfunds: fedfunds !== null ? fedfunds.toFixed(2) : null,
       polymarket: polymarket || { 
         fed_cut: { yes: 0, no: 0, title: "Error" }, 
         recession: { yes: 0, no: 0, title: "Error" } 

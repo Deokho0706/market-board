@@ -314,6 +314,7 @@ async function simulateFetch(section) {
       MOCK_MARKET = data.market || [];
       if (apiData) {
         const updateFredItem = (label, value) => {
+          if (value === null) return;
           const idx = MOCK_MARKET.findIndex(m => m.label === label);
           if (idx > -1) {
             MOCK_MARKET[idx].value = value + "%";
