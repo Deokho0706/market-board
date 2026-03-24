@@ -11,3 +11,4 @@ modify_html.py
 *.log
 *.dump.json
 tests/fixtures/raw/
+.claude/settings.local.json
