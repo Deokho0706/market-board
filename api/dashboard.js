@@ -1,3 +1,4 @@
+import { getFredData } from './providers/fred.js';
 import yf from 'yahoo-finance2';
 const yahooFinance = new yf();
 if (yahooFinance.suppressNotices) {
@@ -11,22 +12,6 @@ export default async function handler(req, res) {
     console.error('[dashboard] missing required env var: FRED_API_KEY');
     return res.status(500).json({ error: '서비스 설정을 확인 중입니다.' });
   }
-
-  const getLatestValue = async (seriesId) => {
-    try {
-      const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${API_KEY}&file_type=json&sort_order=desc&limit=5`;
-      const response = await fetch(url);
-      if (!response.ok) return null;
-      
-      const data = await response.json();
-      const obs = data.observations?.find(o => o.value && o.value !== '.');
-      
-      return obs ? parseFloat(obs.value) : null;
-    } catch (err) {
-      console.error(`FRED API Error for ${seriesId}:`, err);
-      return null;
-    }
-  };
 
   const getPolymarketData = async () => {
     try {
@@ -114,10 +99,8 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [us10y, us2y, fedfunds, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold] = await Promise.all([
-      getLatestValue('DGS10'),
-      getLatestValue('DGS2'),
-      getLatestValue('FEDFUNDS'),
+    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold] = await Promise.all([
+      getFredData(API_KEY),
       getPolymarketData(),
       getYahooData('^GSPC', true),
       getYahooData('^IXIC', true),
@@ -128,14 +111,14 @@ export default async function handler(req, res) {
       getYahooData('GC=F', true)
     ]);
 
-    const spread = (us10y !== null && us2y !== null) ? (us10y - us2y) : null;
+    const spread = (fred.us10y !== null && fred.us2y !== null) ? (fred.us10y - fred.us2y) : null;
 
     res.status(200).json({
       market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
-      us10y: us10y !== null ? us10y.toFixed(2) : null,
-      us2y: us2y !== null ? us2y.toFixed(2) : null,
+      us10y: fred.us10y?.toFixed(2) ?? null,
+      us2y: fred.us2y?.toFixed(2) ?? null,
       spread: spread !== null ? spread.toFixed(2) : null,
-      fedfunds: fedfunds !== null ? fedfunds.toFixed(2) : null,
+      fedfunds: fred.fedfunds?.toFixed(2) ?? null,
       polymarket: polymarket || { 
         fed_cut: { yes: 0, no: 0, title: "Error" }, 
         recession: { yes: 0, no: 0, title: "Error" } 
