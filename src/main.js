@@ -12,6 +12,7 @@ function escHtml(str) {
 let MOCK_MARKET = [];
 let MOCK_PROB = [];
 let MOCK_NEWS = [];
+let lastMeta = null;
 
 // ────────── CHART DATA ──────────
 function genSP500(days) {
@@ -81,6 +82,20 @@ function showSkeleton(gridId, count) {
   g.innerHTML = Array.from({ length: count }, () =>
     `<div class="skeleton"></div>`
   ).join('');
+}
+
+// ────────── STATUS BADGE ──────────
+function updateStatusBadge(meta) {
+  const el = document.getElementById('data-status-badge');
+  if (!el) return;
+  if (!meta) { el.textContent = ''; return; }
+  const map = {
+    live:     'LIVE — 실시간 데이터 (FRED · Yahoo Finance · Polymarket)',
+    partial:  'PARTIAL — 일부 데이터는 지연 또는 대체값일 수 있습니다',
+    fallback: 'FALLBACK — 외부 API 응답 지연, 예비 데이터 표시 중'
+  };
+  el.textContent = map[meta.status] ?? '';
+  el.dataset.status = meta.status ?? '';
 }
 
 // ────────── RENDER ──────────
@@ -303,11 +318,21 @@ async function simulateFetch(section) {
     const data = await res.json();
 
     let apiData = null;
+    lastMeta = null;
     try {
-      const apiRes = await fetch('/api/dashboard');
-      if (apiRes.ok) apiData = await apiRes.json();
-    } catch(err) {
+      const apiRes = await fetch('/api/dashboard', { cache: 'no-store' });
+      if (!apiRes.ok) console.error('[api] status:', apiRes.status);
+      else apiData = await apiRes.json();
+      lastMeta = apiData?._meta ?? {
+        status: 'fallback', updated_at: new Date().toISOString(),
+        sources: [], providers: {}, errors: { fetch: 'api unavailable or invalid response' }
+      };
+    } catch (err) {
       console.error('API error:', err);
+      lastMeta = {
+        status: 'fallback', updated_at: new Date().toISOString(),
+        sources: [], providers: {}, errors: { fetch: 'api request failed' }
+      };
     }
 
     if (section === 'market' || !section) {
@@ -318,12 +343,12 @@ async function simulateFetch(section) {
           const idx = MOCK_MARKET.findIndex(m => m.label === label);
           if (idx > -1) {
             MOCK_MARKET[idx].value = value + "%";
-            MOCK_MARKET[idx].change = "LIVE";
-            MOCK_MARKET[idx].sub = "FRED 실시간";
+            MOCK_MARKET[idx].change = '';
+            MOCK_MARKET[idx].sub    = 'FRED';
             MOCK_MARKET[idx].raw = 0; // neutral class
           } else {
             MOCK_MARKET.push({
-              label, value: value + "%", change: "LIVE", raw: 0, sub: "FRED 실시간"
+              label, value: value + '%', change: '', raw: 0, sub: 'FRED'
             });
           }
         };
@@ -338,10 +363,6 @@ async function simulateFetch(section) {
             MOCK_MARKET[idx].value = yData.price;
             MOCK_MARKET[idx].change = yData.change;
             MOCK_MARKET[idx].raw = yData.raw;
-            if (!MOCK_MARKET[idx].sub.includes('LIVE')) {
-              // sub 라벨 텍스트에 LIVE 추가
-              MOCK_MARKET[idx].sub += " · LIVE";
-            }
           }
         };
 
@@ -363,7 +384,7 @@ async function simulateFetch(section) {
         if (recIdx > -1) {
           MOCK_PROB[recIdx].yes = apiData.polymarket.recession.yes;
           MOCK_PROB[recIdx].no = apiData.polymarket.recession.no;
-          MOCK_PROB[recIdx].src = "Polymarket · LIVE";
+          MOCK_PROB[recIdx].src = "Polymarket";
         }
 
         const fedIdx = MOCK_PROB.findIndex(p => p.title.includes('금리 인하 횟수') || p.title.includes('기준금리 수준'));
@@ -376,7 +397,7 @@ async function simulateFetch(section) {
             { label: "2회 (50bp)", pct: apiData.polymarket.fed_cuts_2026.two }
           ],
           other: Math.max(0, 100 - (apiData.polymarket.fed_cuts_2026.zero + apiData.polymarket.fed_cuts_2026.one + apiData.polymarket.fed_cuts_2026.two)),
-          src: "Polymarket · LIVE"
+          src: "Polymarket"
         };
 
         if (fedIdx > -1) {
@@ -387,8 +408,14 @@ async function simulateFetch(section) {
       }
     }
     if (section === 'news' || !section) MOCK_NEWS = data.news || [];
+    updateStatusBadge(lastMeta);
   } catch (e) {
     console.error('Data fetch error:', e);
+    lastMeta = {
+      status: 'fallback', updated_at: new Date().toISOString(),
+      sources: [], providers: {}, errors: { fetch: 'seed or section fetch failed' }
+    };
+    updateStatusBadge(lastMeta);
   }
 }
 

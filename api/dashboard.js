@@ -111,17 +111,68 @@ export default async function handler(req, res) {
       getYahooData('GC=F', true)
     ]);
 
+    // ── polymarket 정규화 (부분 응답 안전 처리) ──
+    const fallbackPoly = {
+      recession:     { yes: 0, no: 0, title: 'Error' },
+      fed_cuts_2026: { zero: 0, one: 0, two: 0, title: 'Error' }
+    };
+    const poly = {
+      recession:     polymarket?.recession     ?? fallbackPoly.recession,
+      fed_cuts_2026: polymarket?.fed_cuts_2026 ?? fallbackPoly.fed_cuts_2026
+    };
+
+    // ── provider별 status 판정 ──
+    const providers = {
+      fred:       { status: 'live' },
+      yahoo:      { status: 'live' },
+      polymarket: { status: 'live' }
+    };
+    const errors = {};
+
+    // FRED
+    const fredNullCount = [fred.us10y, fred.us2y, fred.fedfunds].filter(v => v === null).length;
+    if (fredNullCount === 3)    { providers.fred.status = 'down';    errors.fred = 'all series null'; }
+    else if (fredNullCount > 0) { providers.fred.status = 'partial'; errors.fred = `${fredNullCount}/3 series null`; }
+
+    // Yahoo — sp500+nasdaq 둘 다 null이면 핵심 없음 → down
+    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold];
+    const yahooFailCount = yahooAll.filter(v => v === null).length;
+    if (yahooFailCount === yahooAll.length || (sp500 === null && nasdaq === null)) {
+      providers.yahoo.status = 'down';    errors.yahoo = `${yahooFailCount}/${yahooAll.length} tickers null`;
+    } else if (yahooFailCount > 0) {
+      providers.yahoo.status = 'partial'; errors.yahoo = `${yahooFailCount}/${yahooAll.length} tickers null`;
+    }
+
+    // Polymarket — recession + fed_cuts_2026 각각 확인
+    const recErr = poly.recession.title === 'Error';
+    const fedErr = poly.fed_cuts_2026.title === 'Error';
+    if (recErr && fedErr)      { providers.polymarket.status = 'down';    errors.polymarket = 'fetch failed'; }
+    else if (recErr || fedErr) { providers.polymarket.status = 'partial'; errors.polymarket = 'some markets unavailable'; }
+
+    // overallStatus: FALLBACK = fred+yahoo 둘 다 비정상(partial/down 포함)
+    const fredOk  = providers.fred.status === 'live';
+    const yahooOk = providers.yahoo.status === 'live';
+    const polyOk  = providers.polymarket.status === 'live';
+    const overallStatus =
+      (fredOk && yahooOk && polyOk) ? 'live'
+      : (!fredOk && !yahooOk)       ? 'fallback'
+      : 'partial';
+
     const spread = (fred.us10y !== null && fred.us2y !== null) ? (fred.us10y - fred.us2y) : null;
 
     res.status(200).json({
       market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
-      us10y: fred.us10y?.toFixed(2) ?? null,
-      us2y: fred.us2y?.toFixed(2) ?? null,
-      spread: spread !== null ? spread.toFixed(2) : null,
+      us10y:    fred.us10y?.toFixed(2) ?? null,
+      us2y:     fred.us2y?.toFixed(2)  ?? null,
+      spread:   spread !== null ? spread.toFixed(2) : null,
       fedfunds: fred.fedfunds?.toFixed(2) ?? null,
-      polymarket: polymarket || { 
-        fed_cut: { yes: 0, no: 0, title: "Error" }, 
-        recession: { yes: 0, no: 0, title: "Error" } 
+      polymarket: poly,
+      _meta: {
+        status:     overallStatus,
+        updated_at: new Date().toISOString(),
+        sources:    ['fred', 'yahoo', 'polymarket'],
+        providers,
+        errors:     Object.keys(errors).length > 0 ? errors : {}
       }
     });
 
