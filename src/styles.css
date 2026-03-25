@@ -660,6 +660,63 @@
     }
   }
 
+  /* ── TOOLTIP ── */
+  .mcard-label[data-tip-def] {
+    cursor: help;
+    text-decoration-line: underline;
+    text-decoration-style: dotted;
+    text-decoration-color: var(--muted);
+    text-underline-offset: 3px;
+    position: relative;
+  }
+
+  .mcard-label[data-tip-def]::after {
+    content: attr(data-tip-def) "\A\2192 " attr(data-tip-hint) "\A\26A0  " attr(data-tip-warn);
+    white-space: pre-line;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 0;
+    width: 240px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 10px 12px;
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--text);
+    font-family: var(--sans);
+    z-index: 200;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .mcard-label[data-tip-def]:hover::after {
+    opacity: 1;
+  }
+
+  /* ── MARKET SECTION HEADER ── */
+  .market-section-header {
+    grid-column: 1 / -1;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 8px 0 4px;
+    border-bottom: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  .market-section-header:first-child {
+    margin-top: 0;
+  }
+
+  /* ── STATUS BADGE COLORS ── */
+  #data-status-badge[data-status="live"]     { color: var(--green); }
+  #data-status-badge[data-status="partial"]  { color: var(--amber); }
+  #data-status-badge[data-status="fallback"] { color: var(--red); }
+
   @media (max-width: 600px) {
     .cards-grid {
       grid-template-columns: repeat(2, 1fr);

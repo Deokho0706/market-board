@@ -14,6 +14,30 @@ let MOCK_PROB = [];
 let MOCK_NEWS = [];
 let lastMeta = null;
 
+// ────────── TOOLTIP & GROUP DATA ──────────
+const MARKET_TIPS = {
+  'S&P 500':      { def: '미국 대형주 500개 종합지수', hint: '꾸준한 상승은 경기 확장 기대 반영', warn: '단기 등락은 노이즈일 수 있음' },
+  'NASDAQ':       { def: '미국 기술주 중심 지수', hint: 'S&P 500 대비 금리 변화에 더 민감', warn: '기술주 집중으로 섹터 편향 있음' },
+  'VIX':          { def: '향후 30일 S&P 500 변동성 기대치', hint: '20↑ 경계, 30↑ 공포 확대 신호', warn: 'VIX 급등만으로 바닥 단정 금지' },
+  '달러인덱스':   { def: '주요 6개 통화 대비 달러 강도 (DXY)', hint: '상승 시 신흥국·원자재 부담 가능', warn: '항상 주식과 반대로 움직이지 않음' },
+  '달러/원':      { def: '달러 대비 원화 환율', hint: '상승 = 원화 약세, 수입 물가 부담', warn: '외환시장 개입으로 단기 왜곡 가능' },
+  'WTI 원유':     { def: '미국 기준 원유 가격 (USD/배럴)', hint: '에너지 비용·인플레이션 선행 지표', warn: '지정학 이벤트로 단기 급변동 빈번' },
+  '금':           { def: '대표 안전자산 (USD/온스)', hint: '불확실성·인플레 우려 시 상승 경향', warn: '달러 강세 구간에선 동반 하락 가능' },
+  '미국 10Y':     { def: '미국 10년물 국채 수익률', hint: '장기 성장·물가 기대 반영', warn: '급등은 긴축 우려, 급락은 경기침체 우려' },
+  '미국 2Y':      { def: '미국 2년물 국채 수익률', hint: '단기 통화정책 기대치에 가장 민감', warn: 'Fed 발언 하나에 급변동 가능' },
+  '장단기금리차': { def: '미국 10Y - 2Y 수익률 차이', hint: '음수(역전) 시 경기침체 선행 신호', warn: '역전 후 실제 침체까지 1~2년 시차 존재' },
+  '연준 기준금리': { def: '연준이 설정한 기준금리', hint: '높을수록 유동성 부담, 낮을수록 완화', warn: '시장은 현재보다 향후 경로 기대에 더 민감' },
+  '공포탐욕':     { def: 'CNN 기반 복합 심리 지수 (0–100)', hint: '극단 공포(≤25) 구간은 역발상 시각 존재', warn: '심리 지표 단독 매매 신호 금지' },
+};
+
+const MARKET_GROUP_ORDER = [
+  { label: '핵심 시장',   items: ['S&P 500', 'NASDAQ', 'VIX'] },
+  { label: '달러·환율',   items: ['달러인덱스', '달러/원'] },
+  { label: '금리',        items: ['미국 10Y', '미국 2Y', '장단기금리차', '연준 기준금리'] },
+  { label: '원자재·실물', items: ['WTI 원유', '금'] },
+  { label: '심리·보조',   items: ['공포탐욕'] },
+];
+
 // ────────── CHART DATA ──────────
 function genSP500(days) {
   const labels = [], data = []; let v = 100;
@@ -102,19 +126,42 @@ function updateStatusBadge(meta) {
 function renderMarket() {
   const g = document.getElementById('market-grid');
   g.innerHTML = '';
-  MOCK_MARKET.forEach(item => {
+
+  const renderCard = (item) => {
     const cls = item.raw > 0 ? 'up' : item.raw < 0 ? 'down' : 'neutral';
     const chg = item.change
       ? `<div class="mcard-change ${cls}">${item.change}</div>` : '';
+    const tips = MARKET_TIPS[item.label];
+    const tipAttrs = tips
+      ? `data-tip-def="${escHtml(tips.def)}" data-tip-hint="${escHtml(tips.hint)}" data-tip-warn="${escHtml(tips.warn)}"`
+      : '';
     const d = document.createElement('div');
     d.className = `mcard ${cls} fade-in`;
     d.innerHTML = `
-  <div class="mcard-label">${item.label}</div>
+  <div class="mcard-label" ${tipAttrs}>${item.label}</div>
   <div class="mcard-value">${item.value}</div>
   ${chg}
   <div class="mcard-sub">${item.sub}</div>`;
     g.appendChild(d);
+  };
+
+  // 그룹 순서대로 섹션 헤더 + 카드 렌더
+  MARKET_GROUP_ORDER.forEach(group => {
+    const groupItems = MOCK_MARKET.filter(item => group.items.includes(item.label));
+    if (groupItems.length === 0) return;
+    const header = document.createElement('div');
+    header.className = 'market-section-header';
+    header.textContent = group.label;
+    g.appendChild(header);
+    group.items.forEach(label => {
+      const item = groupItems.find(m => m.label === label);
+      if (item) renderCard(item);
+    });
   });
+
+  // 그룹 미정의 항목 안전망 렌더
+  const assigned = new Set(MARKET_GROUP_ORDER.flatMap(grp => grp.items));
+  MOCK_MARKET.filter(item => !assigned.has(item.label)).forEach(renderCard);
 }
 
 function renderProb() {
