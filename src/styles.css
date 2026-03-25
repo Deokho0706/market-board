@@ -660,40 +660,142 @@
     }
   }
 
-  /* ── TOOLTIP ── */
-  .mcard-label[data-tip-def] {
-    cursor: help;
-    text-decoration-line: underline;
-    text-decoration-style: dotted;
-    text-decoration-color: var(--muted);
-    text-underline-offset: 3px;
-    position: relative;
+  /* ── TOOLTIP POPOVER ── */
+  .mcard-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
-  .mcard-label[data-tip-def]::after {
-    content: attr(data-tip-def) "\A\2192 " attr(data-tip-hint) "\A\26A0  " attr(data-tip-warn);
-    white-space: pre-line;
-    position: absolute;
-    bottom: calc(100% + 6px);
-    left: 0;
-    width: 240px;
+  .mcard-label-btn {
+    font: inherit;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: #b0bcc8;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    text-align: left;
+    text-decoration: underline dotted var(--muted);
+    text-underline-offset: 3px;
+    transition: color 0.15s;
+  }
+  .mcard-label-btn:hover { color: var(--accent); }
+  .mcard-label-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .mcard-info-btn {
+    position: static;
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: none;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.15s, background 0.15s;
+  }
+  .mcard-info-btn:hover,
+  .mcard-info-btn[aria-expanded="true"] {
+    color: var(--accent);
+    background: rgba(0,212,170,0.08);
+  }
+  .mcard-info-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+
+  #info-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 900;
+    width: min(360px, calc(100vw - 32px));
+    max-height: 80vh;
+    overflow-y: auto;
     background: var(--surface);
     border: 1px solid var(--border2);
-    border-radius: 6px;
-    padding: 10px 12px;
-    font-size: 11px;
+    border-radius: 8px;
+    padding: 20px;
+    font-size: 12px;
     line-height: 1.65;
     color: var(--text);
     font-family: var(--sans);
-    z-index: 200;
-    pointer-events: none;
-    opacity: 0;
-    transition: opacity 0.15s;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    display: none;
+  }
+  #info-modal.open { display: block; }
+
+  .tip-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.15s, background 0.15s;
+  }
+  .tip-close-btn:hover { color: var(--text); background: var(--border); }
+  .tip-close-btn:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 
-  .mcard-label[data-tip-def]:hover::after {
-    opacity: 1;
+  .tip-title {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    padding-right: 32px;
   }
+  .tip-row { margin-bottom: 6px; }
+  .tip-row:last-child { margin-bottom: 0; }
+  .tip-row-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+  .tip-row-label.def  { color: #8a96a8; }
+  .tip-row-label.hint { color: var(--green); }
+  .tip-row-label.warn { color: var(--amber); }
+
+  #info-modal-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 899;
+  }
+  #info-modal-backdrop.open { display: block; }
 
   /* ── MARKET SECTION HEADER ── */
   .market-section-header {

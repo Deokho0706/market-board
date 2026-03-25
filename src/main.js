@@ -108,6 +108,107 @@ function showSkeleton(gridId, count) {
   ).join('');
 }
 
+// ────────── INFO MODAL ──────────
+let _activeTrigger = null;
+let _infoModalInited = false;
+
+function hideTip() {
+  const modal = document.getElementById('info-modal');
+  const backdrop = document.getElementById('info-modal-backdrop');
+  if (!modal) return;
+  modal.classList.remove('open');
+  modal.setAttribute('aria-hidden', 'true');
+  if (backdrop) backdrop.classList.remove('open');
+  document.body.style.overflow = '';
+  const prev = _activeTrigger;
+  if (prev) {
+    prev.setAttribute('aria-expanded', 'false');
+    _activeTrigger = null;
+    prev.focus();
+  }
+}
+
+function showTip(trigger) {
+  const label = trigger.dataset.tipLabel;
+  const tips = MARKET_TIPS[label];
+  if (!tips) return;
+
+  const modal = document.getElementById('info-modal');
+  const backdrop = document.getElementById('info-modal-backdrop');
+  if (!modal) return;
+
+  // 같은 트리거 재클릭 → 토글 닫힘
+  if (_activeTrigger === trigger) { hideTip(); return; }
+
+  // 이전 트리거 aria 초기화
+  if (_activeTrigger) _activeTrigger.setAttribute('aria-expanded', 'false');
+
+  // 콘텐츠 채우기
+  modal.innerHTML = `
+    <button type="button" class="tip-close-btn" aria-label="설명 닫기">×</button>
+    <div id="tip-popover-title" class="tip-title">${escHtml(label)}</div>
+    <div class="tip-row">
+      <div class="tip-row-label def">정의</div>
+      <div>${escHtml(tips.def)}</div>
+    </div>
+    <div class="tip-row">
+      <div class="tip-row-label hint">해석</div>
+      <div>${escHtml(tips.hint)}</div>
+    </div>
+    <div class="tip-row">
+      <div class="tip-row-label warn">주의</div>
+      <div>${escHtml(tips.warn)}</div>
+    </div>`;
+
+  modal.classList.add('open');
+  modal.setAttribute('aria-hidden', 'false');
+  modal.setAttribute('role', 'dialog');
+  modal.setAttribute('aria-modal', 'true');
+  modal.setAttribute('aria-labelledby', 'tip-popover-title');
+  if (backdrop) backdrop.classList.add('open');
+  document.body.style.overflow = 'hidden';
+
+  _activeTrigger = trigger;
+  trigger.setAttribute('aria-expanded', 'true');
+  modal.querySelector('.tip-close-btn').addEventListener('click', hideTip);
+}
+
+function initInfoModal() {
+  if (_infoModalInited) return;
+  _infoModalInited = true;
+
+  if (!document.getElementById('info-modal')) {
+    const modal = document.createElement('div');
+    modal.id = 'info-modal';
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(modal);
+  }
+  if (!document.getElementById('info-modal-backdrop')) {
+    const bd = document.createElement('div');
+    bd.id = 'info-modal-backdrop';
+    document.body.appendChild(bd);
+  }
+
+  // 이벤트 위임 — market-grid 내 두 트리거 버튼
+  document.getElementById('market-grid').addEventListener('click', e => {
+    const trigger = e.target.closest('[data-tip-label]');
+    if (trigger) { e.stopPropagation(); showTip(trigger); }
+  });
+
+  // backdrop 클릭 닫힘
+  document.getElementById('info-modal-backdrop').addEventListener('click', hideTip);
+
+  // 외부 클릭 닫힘
+  document.addEventListener('click', e => {
+    if (!e.target.closest('#info-modal') && !e.target.closest('[data-tip-label]')) hideTip();
+  });
+
+  // ESC 닫힘 (포커스 복원은 hideTip 내부 처리)
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') hideTip();
+  });
+}
+
 // ────────── STATUS BADGE ──────────
 function updateStatusBadge(meta) {
   const el = document.getElementById('data-status-badge');
@@ -133,12 +234,20 @@ function renderMarket() {
       ? `<div class="mcard-change ${cls}">${item.change}</div>` : '';
     const tips = MARKET_TIPS[item.label];
     const tipAttrs = tips
-      ? `data-tip-def="${escHtml(tips.def)}" data-tip-hint="${escHtml(tips.hint)}" data-tip-warn="${escHtml(tips.warn)}"`
+      ? `data-tip-label="${escHtml(item.label)}" aria-expanded="false" aria-controls="info-modal"`
       : '';
+    const head = tips
+      ? `<div class="mcard-head">
+    <button type="button" class="mcard-label-btn" ${tipAttrs}
+      aria-label="${escHtml(item.label)} 지표 설명">${escHtml(item.label)}</button>
+    <button type="button" class="mcard-info-btn" ${tipAttrs}
+      aria-label="${escHtml(item.label)} 상세 설명">ⓘ</button>
+  </div>`
+      : `<div class="mcard-head"><div class="mcard-label">${escHtml(item.label)}</div></div>`;
     const d = document.createElement('div');
     d.className = `mcard ${cls} fade-in`;
     d.innerHTML = `
-  <div class="mcard-label" ${tipAttrs}>${item.label}</div>
+  ${head}
   <div class="mcard-value">${item.value}</div>
   ${chg}
   <div class="mcard-sub">${item.sub}</div>`;
@@ -531,6 +640,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  initInfoModal();
   renderProb();
   renderNews();
   buildCharts();
