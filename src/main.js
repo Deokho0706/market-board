@@ -16,18 +16,91 @@ let lastMeta = null;
 
 // ────────── TOOLTIP & GROUP DATA ──────────
 const MARKET_TIPS = {
-  'S&P 500':      { def: '미국 대형주 500개 종합지수', hint: '꾸준한 상승은 경기 확장 기대 반영', warn: '단기 등락은 노이즈일 수 있음' },
-  'NASDAQ':       { def: '미국 기술주 중심 지수', hint: 'S&P 500 대비 금리 변화에 더 민감', warn: '기술주 집중으로 섹터 편향 있음' },
-  'VIX':          { def: '향후 30일 S&P 500 변동성 기대치', hint: '20↑ 경계, 30↑ 공포 확대 신호', warn: 'VIX 급등만으로 바닥 단정 금지' },
-  '달러인덱스':   { def: '주요 6개 통화 대비 달러 강도 (DXY)', hint: '상승 시 신흥국·원자재 부담 가능', warn: '항상 주식과 반대로 움직이지 않음' },
-  '달러/원':      { def: '달러 대비 원화 환율', hint: '상승 = 원화 약세, 수입 물가 부담', warn: '외환시장 개입으로 단기 왜곡 가능' },
-  'WTI 원유':     { def: '미국 기준 원유 가격 (USD/배럴)', hint: '에너지 비용·인플레이션 선행 지표', warn: '지정학 이벤트로 단기 급변동 빈번' },
-  '금':           { def: '대표 안전자산 (USD/온스)', hint: '불확실성·인플레 우려 시 상승 경향', warn: '달러 강세 구간에선 동반 하락 가능' },
-  '미국 10Y':     { def: '미국 10년물 국채 수익률', hint: '장기 성장·물가 기대 반영', warn: '급등은 긴축 우려, 급락은 경기침체 우려' },
-  '미국 2Y':      { def: '미국 2년물 국채 수익률', hint: '단기 통화정책 기대치에 가장 민감', warn: 'Fed 발언 하나에 급변동 가능' },
-  '장단기금리차': { def: '미국 10Y - 2Y 수익률 차이', hint: '음수(역전) 시 경기침체 선행 신호', warn: '역전 후 실제 침체까지 1~2년 시차 존재' },
-  '연준 기준금리': { def: '연준이 설정한 기준금리', hint: '높을수록 유동성 부담, 낮을수록 완화', warn: '시장은 현재보다 향후 경로 기대에 더 민감' },
-  '공포탐욕':     { def: 'CNN 기반 복합 심리 지수 (0–100)', hint: '극단 공포(≤25) 구간은 역발상 시각 존재', warn: '심리 지표 단독 매매 신호 금지' },
+  'S&P 500': {
+    def: '미국 대형 상장기업 500개로 구성된 대표 주가지수입니다. 미국 증시 전반의 흐름을 가장 널리 보여주는 기준 지표 중 하나입니다.',
+    current: '현재 지수는 최근 고점 대비 하락한 수준입니다. 단기 되돌림 구간으로 볼 수 있지만, 일반적으로 말하는 본격 조정은 보통 고점 대비 약 -10% 이상 하락한 경우를 뜻합니다.',
+    context: 'S&P 500은 상승장에서도 -5% 안팎 하락이 자주 나타나며, -10% 수준의 조정도 반복적으로 발생합니다. 하락 자체보다 그 하락이 실적 둔화나 경기 악화로 이어지는지가 더 중요합니다.',
+    implication: '기업 실적과 경기 확장 흐름이 유지된다면 하락은 분할매수 기회가 될 수 있습니다. 반대로 금리 부담, 실적 둔화, 유동성 축소가 겹치면 하락 폭이 더 커질 수 있습니다.',
+    warn: '단기 하락만으로 추세 전환을 단정하지 마세요. 지수 수준뿐 아니라 실적 전망, 금리, 변동성, 신용시장 흐름을 함께 확인하는 것이 중요합니다.'
+  },
+  'NASDAQ': {
+    def: '미국 기술·성장주 중심의 종합주가지수입니다. 애플, 마이크로소프트, 엔비디아, 아마존 등 대형 기술기업의 비중이 높아 금리 변화에 특히 민감하게 반응합니다.',
+    current: '현재 지수는 최근 고점 대비 하락한 수준입니다. S&P 500보다 낙폭이 크게 나타나는 경우가 많으며, 이는 지수 내 성장주 비중이 높기 때문입니다.',
+    context: '시가총액 상위 7개 기업(Magnificent 7)이 지수 전체의 약 40%를 차지합니다. 이들의 실적과 실적 가이던스가 지수 전체 방향에 큰 영향을 미칩니다.',
+    implication: '금리가 높은 환경에서는 미래 수익을 현재가치로 할인하는 비율(DCF 할인율)이 높아져 성장주 밸류에이션에 부담이 커집니다. 금리 인하 기대가 커지면 반등 탄력도 가장 크게 나타나는 경향이 있습니다.',
+    warn: '기술주 집중으로 섹터 편향이 심합니다. 개별 종목 리스크보다 섹터 전체의 순환매 흐름을 함께 확인하는 것이 중요합니다.'
+  },
+  'VIX': {
+    def: 'CBOE 변동성 지수입니다. 향후 30일간 S&P 500의 예상 변동성을 옵션 가격에서 산출하며, 시장의 불안감을 수치화한 지표입니다.',
+    current: '현재 20 이상으로 경계 구간에 진입해 있습니다. 시장 참여자들이 리스크 헤지 비용을 높이고 있으며, 단기 불확실성이 확대된 상태입니다.',
+    context: 'VIX 12~15: 안정 | 15~20: 정상 | 20~30: 경계 | 30~40: 공포 | 40 이상: 극단 공포. 2020년 코로나 위기 당시 82.69까지 상승한 사례가 있습니다.',
+    implication: 'VIX가 20을 넘으면 포트폴리오 리스크 관리를 점검할 필요가 있습니다. 과거 사례를 보면 VIX가 급등한 직후 1~3개월 내 주가가 반등하는 패턴이 자주 관찰됩니다.',
+    warn: 'VIX 단독으로 매매 타이밍을 판단하지 마세요. 거래량, 풀투콜 비율, 신용 스프레드와 함께 종합적으로 판단하는 것이 중요합니다.'
+  },
+  '달러인덱스': {
+    def: '주요 6개 통화(유로, 엔, 파운드, 캐나다 달러, 스웨덴 크로나, 스위스 프랑) 대비 미국 달러의 상대적 강도를 나타내는 지수입니다(DXY).',
+    current: '현재 100 근방으로 달러 강세가 지속되고 있습니다. 미국 경제의 상대적 강세와 높은 금리가 달러 수요를 뒷받침하고 있습니다.',
+    context: 'DXY 90 미만: 달러 약세 | 90~100: 보통 | 100~105: 강세 | 105 이상: 극단 강세. 2022년 9월에는 114.78까지 상승한 사례가 있습니다.',
+    implication: '달러 강세는 신흥국 자산과 원자재 가격에 하락 압력을 줄 수 있습니다. 해외 자산에 투자하는 경우 환율 변동이 원화 환산 수익률에 직접 영향을 미칩니다.',
+    warn: '달러와 주식이 항상 반대로 움직이지는 않습니다. 글로벌 위기 시에는 달러와 주식이 동반 하락하는 경우도 있으니 주의가 필요합니다.'
+  },
+  '달러/원': {
+    def: '미국 달러 1당 한국 원화로 표시하는 환율입니다(KRW/USD). 숫자가 높을수록 원화 가치가 낮아집니다.',
+    current: '현재 1,500원 근방으로 원화 약세가 지속되고 있습니다. 달러 강세와 외국인 자금 유출 압력이 복합적으로 작용하고 있습니다.',
+    context: '1,200원 미만: 원화 강세 | 1,200~1,350원: 정상 범위 | 1,350~1,450원: 약세 경계 | 1,450원 이상: 심각한 약세. 2022년 10월 1,445원까지 상승한 사례가 있습니다.',
+    implication: '원화 약세는 수출 기업 수익에 유리하지만, 수입 물가 상승과 외채 상환 부담 증가로 이어집니다. 해외 자산에 투자할 때는 환율 변동이 수익률에 직접 영향을 미칩니다.',
+    warn: '외환당국의 시장 개입으로 단기 변동이 왜곡될 수 있습니다. NDF(역외 선물환) 시장 동향도 함께 확인하는 것이 유용합니다.'
+  },
+  'WTI 원유': {
+    def: '서부 텍사스산 중질유를 기준으로 한 국제 원유 가격입니다(USD/배럴). 글로벌 에너지 비용과 인플레이션에 직접적인 영향을 미칩니다.',
+    current: '현재 $90 이상으로 고유가 경계 구간에 있습니다. 중동 지정학적 긴장과 공급 차질 우려가 가격에 반영되어 인플레이션 재점화 우려가 커지고 있습니다.',
+    context: '$60 미만: 저유가 | $60~80: 정상 | $80~100: 고유가 경계 | $100 이상: 경제 부담 구간. 2022년 러시아-우크라이나 전쟁 시에는 $130을 넘은 사례가 있습니다.',
+    implication: '원유 가격 급등은 에너지 비용 상승 → 운송비 상승 → 전반적 물가 상승으로 이어집니다. 연준의 금리 인하 시기를 더 지연시킬 수 있습니다.',
+    warn: '지정학적 이벤트로 단기 급변동이 빈번합니다. OPEC+ 감산 결정, 미국 전략비축유(SPR) 방출 등 정책 변수도 함께 확인하세요.'
+  },
+  '금': {
+    def: '국제 금 현물 가격입니다(USD/트로이온스). 인플레이션 헤지, 지정학 위기 헤지, 중앙은행 외환보유고 자산으로 활용됩니다.',
+    current: '현재 달러 강세와 실질금리 상승이 금 가격에 하락 압력을 주고 있습니다. 실질금리(명목금리 − 기대인플)와 금 가격은 역상관 관계를 보이는 경향이 있습니다.',
+    context: '2024~2025년 중앙은행들의 금 매입이 사상 최대 수준을 기록했습니다. 달러 패권주의 대안으로 금을 선호하는 국가들이 늘어나고 있는 추세입니다.',
+    implication: '금 하락은 위험자산 선호도 상승을 의미할 수 있지만, 단순 달러 강세에 의한 기계적 하락일 수도 있습니다. 장기적으로는 인플레이션 헤지 수단으로 활용됩니다.',
+    warn: '단기 가격 변동에 민감하게 반응하지 마세요. 달러 강세 구간에는 금이 동반 하락할 수 있으며, 장기 보유 시에는 실질금리 추세를 함께 확인하는 것이 중요합니다.'
+  },
+  '미국 10Y': {
+    def: '미국 정부가 발행한 10년 만기 국채의 수익률입니다. 주택담보대출, 회사채 등 장기 차입 비용의 기준이 되며, 시장의 장기 경제 전망을 반영합니다.',
+
+    current: '현재 4% 중반대로 비교적 높은 수준을 유지하고 있습니다. 시장은 인플레이션이 어느 정도 통제되는 한편 연준의 금리 동결이 지속될 것으로 예상하고 있습니다.',
+    context: '3.5% 미만: 완화적 | 3.5~4.5%: 중립 | 4.5% 이상: 긴축적. 금리가 오르면 기존 채권 가격은 하락하므로, 채권 편입 시점을 확인하는 것이 중요합니다.',
+    implication: '금리 상승은 고PER 성장주의 밸류에이션을 압박하고 부동산 시장에 부담을 줍니다. 금리 하락은 성장주 반등과 주택 시장 회복에 유리하게 작용합니다.',
+    warn: '금리 급등 시 주식시장 전반에 스트레스를 줄 수 있습니다. 특히 고PER 성장주에 민감하게 작용하므로, 주식과 채권을 함께 모니터링하세요.'
+  },
+  '미국 2Y': {
+    def: '미국 정부가 발행한 2년 만기 국채의 수익률입니다. 연준의 금리 정책 기대치를 가장 빠르게 반영하는 지표로, 단기 통화정책 방향성을 파악하는 데 유용합니다.',
+    current: '현재 4.7% 근방으로 높은 수준입니다. 시장이 연준의 금리 동결 또는 추가 인상 가능성을 반영하고 있습니다. FOMC 일정과 경제지표 발표에 따라 민감하게 움직입니다.',
+    context: '2년물은 FOMC 발언과 경제지표 발표 직후 급변동하는 경우가 많습니다. 2년물이 10년물보다 높으면 역전 상태로, 이는 경기 둔화 신호로 해석됩니다.',
+    implication: '2년물 금리가 하락하면 연준의 금리 인하 기대가 커지고 있다는 신호입니다. 이는 주식과 채권에 긍정적으로 작용하는 경향이 있습니다.',
+    warn: 'FOMC 위원들의 발언 하나에 급변동할 수 있습니다. 단기 트레이딩보다는 중장기 추세 판단에 활용하는 것이 적합합니다.'
+  },
+  '장단기금리차': {
+    def: '10년물 국채 수익률에서 2년물 수익률을 뺀 값입니다(10Y − 2Y). 이 값이 마이너스(-)면 역전 상태로, 경기침체의 선행 신호로 널리 활용됩니다.',
+    current: '현재 역전 상태가 지속되고 있습니다. 단기 금리가 장기 금리보다 높아, 시장이 향후 경기 둔화를 예상하고 있다는 의미로 해석됩니다.',
+    context: '역전은 지난 50년간 미국의 모든 경기침체를 선행했습니다. 다만 역전 후 실제 침체까지는 평균 12~18개월의 시차가 있어 단기 지표로는 한계가 있습니다.',
+    implication: '역전이 해소되는 시점이 오히려 더 위험할 수 있습니다. 역전 해소는 보통 연준이 금리를 인하하기 시작할 때 발생하며, 이때 경기침체가 본격화되는 경우가 많았습니다.',
+    warn: '역전 기간이 길어질수록 후속 충격이 커질 수 있습니다. 단독 지표로 판단하지 말고 실업률, PMI, 신용스프레드 등과 함께 확인하세요.'
+  },
+  '연준 기준금리': {
+    def: '연방준비제도(Fed)가 설정하는 연방기금금리 목표 범위입니다. 모든 단기 금리의 기준이 되며, 시장 전반의 유동성과 차입 비용에 직접적인 영향을 미칩니다.',
+    current: '현재 5.25~5.50%로 동결 중입니다. 2023년 7월 이후 동결이 지속되고 있으며, 시장은 2026년 하반기 첫 인하 가능성을 반영하고 있습니다.',
+    context: '0~0.25%: 초완화 | 2~3%: 중립 | 4% 이상: 긴축 | 5% 이상: 강력 긴축. 현재 수준은 2001년 이후 최고치이며, ‘Higher for Longer’ 기조가 지속되고 있습니다.',
+    implication: '높은 기준금리는 기업 차입 비용 증가, 소비 위축, 부동산 시장 압박으로 이어집니다. 인하 시작 시 주식과 채권의 동반 상승 가능성이 있습니다.',
+    warn: '시장은 현재 금리보다 향후 금리 경로 기대에 더 민감하게 반응합니다. CME FedWatch의 확률 변화를 주시하는 것이 중요합니다.'
+  },
+  '공포탐욕': {
+    def: 'CNN이 산출하는 시장 심리 지수입니다(0~100). 주가 모멘텀, 시장 강도, 거래 범위, 풀투콜 비율, 정크채 스프레드, VIX, 안전자산 수요 등 7개 지표를 종합합니다.',
+    current: '현재 20 미만으로 Extreme Fear(극단 공포) 단계입니다. 시장 참여자들의 위험회피 심리가 극대화되어 있는 상태입니다.',
+    context: '0~25: 극단 공포 | 25~45: 공포 | 45~55: 중립 | 55~75: 탐욕 | 75~100: 극단 탐욕. 과거 극단 공포 구간은 역발상 매수 기회와 겹치는 경우가 많았습니다.',
+    implication: '공포 구간에서는 시장이 과도하게 비관적으로 평가되어 있을 가능성이 있습니다. 다만 공포가 더 심화될 수도 있으므로 분할 매수 등 단계적 접근이 유리합니다.',
+    warn: '심리 지표 단독으로 매매 타이밍을 잡지 마세요. 펀더멘털(실적, 경제지표)과 함께 판단하는 보조 지표로 활용하세요.'
+  },
 };
 
 const MARKET_GROUP_ORDER = [
@@ -152,11 +225,19 @@ function showTip(trigger) {
       <div>${escHtml(tips.def)}</div>
     </div>
     <div class="tip-row">
-      <div class="tip-row-label hint">해석</div>
-      <div>${escHtml(tips.hint)}</div>
+      <div class="tip-row-label current">현재 상태</div>
+      <div>${escHtml(tips.current)}</div>
     </div>
     <div class="tip-row">
-      <div class="tip-row-label warn">주의</div>
+      <div class="tip-row-label context">과거 패턴</div>
+      <div>${escHtml(tips.context)}</div>
+    </div>
+    <div class="tip-row">
+      <div class="tip-row-label hint">투자 시사점</div>
+      <div>${escHtml(tips.implication)}</div>
+    </div>
+    <div class="tip-row">
+      <div class="tip-row-label warn">유의사항</div>
       <div>${escHtml(tips.warn)}</div>
     </div>`;
 
@@ -189,18 +270,21 @@ function initInfoModal() {
     document.body.appendChild(bd);
   }
 
-  // 이벤트 위임 — market-grid 내 두 트리거 버튼
+  // 이벤트 위임 — market-grid 내 카드 전체 클릭
   document.getElementById('market-grid').addEventListener('click', e => {
-    const trigger = e.target.closest('[data-tip-label]');
-    if (trigger) { e.stopPropagation(); showTip(trigger); }
+    const card = e.target.closest('.mcard');
+    if (card) {
+      const trigger = card.querySelector('[data-tip-label]');
+      if (trigger) { e.stopPropagation(); showTip(trigger); }
+    }
   });
 
   // backdrop 클릭 닫힘
   document.getElementById('info-modal-backdrop').addEventListener('click', hideTip);
 
-  // 외부 클릭 닫힘
+  // 외부 클릭 닫힘 (모달·카드 영역 제외)
   document.addEventListener('click', e => {
-    if (!e.target.closest('#info-modal') && !e.target.closest('[data-tip-label]')) hideTip();
+    if (!e.target.closest('#info-modal') && !e.target.closest('.mcard') && !e.target.closest('[data-tip-label]')) hideTip();
   });
 
   // ESC 닫힘 (포커스 복원은 hideTip 내부 처리)
@@ -237,15 +321,13 @@ function renderMarket() {
       ? `data-tip-label="${escHtml(item.label)}" aria-expanded="false" aria-controls="info-modal"`
       : '';
     const head = tips
-      ? `<div class="mcard-head">
-    <button type="button" class="mcard-label-btn" ${tipAttrs}
-      aria-label="${escHtml(item.label)} 지표 설명">${escHtml(item.label)}</button>
-    <button type="button" class="mcard-info-btn" ${tipAttrs}
-      aria-label="${escHtml(item.label)} 상세 설명">ⓘ</button>
+      ? `<div class="mcard-head" ${tipAttrs} aria-label="${escHtml(item.label)} 상세 정보 보기">
+    <div class="mcard-label">${escHtml(item.label)}</div>
   </div>`
       : `<div class="mcard-head"><div class="mcard-label">${escHtml(item.label)}</div></div>`;
     const d = document.createElement('div');
     d.className = `mcard ${cls} fade-in`;
+    if (tips) d.style.cursor = 'pointer';
     d.innerHTML = `
   ${head}
   <div class="mcard-value">${item.value}</div>
@@ -343,14 +425,42 @@ function chartOpts() {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
+        enabled: true,
         backgroundColor: '#111318',
-        borderColor: '#2a3040', borderWidth: 1,
-        titleColor: '#8a96a8', bodyColor: '#c8d0dc',
-        titleFont: { family: 'IBM Plex Mono', size: 10 },
-        bodyFont: { family: 'IBM Plex Mono', size: 11 },
+        borderColor: '#00d4aa', borderWidth: 1,
+        titleColor: '#00d4aa', bodyColor: '#c8d0dc',
+        titleFont: { family: 'IBM Plex Mono', size: 11, weight: '600' },
+        bodyFont: { family: 'IBM Plex Mono', size: 12 },
+        padding: 12,
+        displayColors: false,
+        callbacks: {
+          title: function(context) {
+            return context[0]?.label || '';
+          },
+          label: function(context) {
+            const value = context.parsed.y;
+            return '값: ' + value.toFixed(2);
+          },
+          afterLabel: function(context) {
+            const dataIndex = context.dataIndex;
+            const dataset = context.dataset.data;
+            const currentValue = context.parsed.y;
+            if (dataIndex > 0) {
+              const prevValue = dataset[dataIndex - 1];
+              const change = currentValue - prevValue;
+              const changePercent = ((change / prevValue) * 100).toFixed(2);
+              return '변화: ' + (change > 0 ? '+' : '') + change.toFixed(2) + ' (' + (changePercent > 0 ? '+' : '') + changePercent + '%)';
+            }
+            return '';
+          }
+        }
       }
     },
     scales: {
@@ -596,7 +706,10 @@ async function reloadSection(section) {
     await simulateFetch(section);
     // FIX: fetch 완료 이후에 캐시 타임스탬프 기록 (원본은 fetch 전에 기록)
     CACHE[section] = Date.now();
-    if (section === 'market') renderMarket();
+    if (section === 'market') {
+      renderMarket();
+      initInfoModal();
+    }
     if (section === 'prob') renderProb();
     if (section === 'news') renderNews();
     setTs(`ts-${section}`, new Date(CACHE[section]), false);
@@ -657,7 +770,7 @@ async function reloadAll() {
 }
 
 // ────────── INIT ──────────
-(async () => {
+async function initApp() {
   ['market', 'prob', 'news'].forEach(s => {
     setBtnState(`btn-${s}`, true);
     showSkeleton(`${s}-grid`, s === 'market' ? 10 : 6);
@@ -674,6 +787,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  initInfoModal();
   renderProb();
   renderNews();
   buildCharts();
@@ -685,7 +799,14 @@ async function reloadAll() {
   });
   setTs('ts-chart', d, false);
   document.getElementById('ts-val').textContent = fmtTs(d);
-})();
+}
+
+// DOMContentLoaded 또는 즉시 실행
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 
 // ────────── 전역 함수 노출 (HTML onclick 핸들러용) ──────────
 window.reloadAll = reloadAll;
