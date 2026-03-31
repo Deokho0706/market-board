@@ -278,9 +278,7 @@ function showTip(trigger) {
 }
 
 function initInfoModal() {
-  if (_infoModalInited) return;
-  _infoModalInited = true;
-
+  // 모달 DOM 생성 (없을 때만)
   if (!document.getElementById('info-modal')) {
     const modal = document.createElement('div');
     modal.id = 'info-modal';
@@ -293,24 +291,26 @@ function initInfoModal() {
     document.body.appendChild(bd);
   }
 
-  // 이벤트 위임 — market-grid 내 카드 전체 클릭
-  document.getElementById('market-grid').addEventListener('click', e => {
-    const card = e.target.closest('.mcard');
+  // 이미 초기화된 경우 이벤트 재등록 방지 (플래그는 DOM 생성 이후에 체크)
+  if (_infoModalInited) return;
+  _infoModalInited = true;
+
+  // 이벤트 위임 — document 레벨에서 .mcard 클릭 감지
+  document.addEventListener('click', e => {
+    const card = e.target.closest('.mcard[data-tip-label]');
     if (card) {
-      const trigger = card.querySelector('[data-tip-label]');
-      if (trigger) { e.stopPropagation(); showTip(trigger); }
+      e.stopPropagation();
+      showTip(card);
+      return;
     }
+    // 모달 외부 클릭 시 닫힘
+    if (!e.target.closest('#info-modal')) hideTip();
   });
 
   // backdrop 클릭 닫힘
   document.getElementById('info-modal-backdrop').addEventListener('click', hideTip);
 
-  // 외부 클릭 닫힘 (모달·카드 영역 제외)
-  document.addEventListener('click', e => {
-    if (!e.target.closest('#info-modal') && !e.target.closest('.mcard') && !e.target.closest('[data-tip-label]')) hideTip();
-  });
-
-  // ESC 닫힘 (포커스 복원은 hideTip 내부 처리)
+  // ESC 닫힘
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') hideTip();
   });
@@ -350,7 +350,13 @@ function renderMarket() {
       : `<div class="mcard-head"><div class="mcard-label">${escHtml(item.label)}</div></div>`;
     const d = document.createElement('div');
     d.className = `mcard ${cls} fade-in`;
-    if (tips) d.style.cursor = 'pointer';
+    if (tips) {
+      d.style.cursor = 'pointer';
+      d.dataset.tipLabel = item.label;  // 카드 자체에 data-tip-label 부여
+      d.setAttribute('role', 'button');
+      d.setAttribute('tabindex', '0');
+      d.setAttribute('aria-label', `${item.label} 상세 정보 보기`);
+    }
     d.innerHTML = `
   ${head}
   <div class="mcard-value">${item.value}</div>
