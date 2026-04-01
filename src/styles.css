@@ -660,7 +660,7 @@
     }
   }
 
-  /* ── TOOLTIP POPOVER ── */
+  /* ── CARD CLICK MODAL ── */
   .mcard-head {
     display: flex;
     align-items: flex-start;
@@ -669,53 +669,13 @@
     margin-bottom: 8px;
   }
 
-  .mcard-label-btn {
-    font: inherit;
-    font-size: 10px;
-    font-family: var(--mono);
-    color: #b0bcc8;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    background: none;
-    border: none;
-    padding: 0;
+  .mcard[data-tip-label] {
     cursor: pointer;
-    text-align: left;
-    text-decoration: underline dotted var(--muted);
-    text-underline-offset: 3px;
-    transition: color 0.15s;
   }
-  .mcard-label-btn:hover { color: var(--accent); }
-  .mcard-label-btn:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-    border-radius: 2px;
+  .mcard[data-tip-label]:hover {
+    border-color: var(--accent);
   }
-
-  .mcard-info-btn {
-    position: static;
-    flex: 0 0 auto;
-    width: 24px;
-    height: 24px;
-    border: none;
-    background: none;
-    color: var(--muted);
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    transition: color 0.15s, background 0.15s;
-  }
-  .mcard-info-btn:hover,
-  .mcard-info-btn[aria-expanded="true"] {
-    color: var(--accent);
-    background: rgba(0,212,170,0.08);
-  }
-  .mcard-info-btn:focus-visible {
+  .mcard[data-tip-label]:focus-visible {
     outline: 2px solid var(--accent);
     outline-offset: 2px;
   }

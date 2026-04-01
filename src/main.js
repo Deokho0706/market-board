@@ -189,10 +189,18 @@ function initInfoModal() {
     document.body.appendChild(bd);
   }
 
-  // 이벤트 위임 — market-grid 내 두 트리거 버튼
+  // 이벤트 위임 — 카드 전체 클릭
   document.getElementById('market-grid').addEventListener('click', e => {
     const trigger = e.target.closest('[data-tip-label]');
     if (trigger) { e.stopPropagation(); showTip(trigger); }
+  });
+
+  // 키보드 접근성 (Enter/Space)
+  document.getElementById('market-grid').addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const trigger = e.target.closest('[data-tip-label]');
+      if (trigger) { e.preventDefault(); e.stopPropagation(); showTip(trigger); }
+    }
   });
 
   // backdrop 클릭 닫힘
@@ -233,21 +241,18 @@ function renderMarket() {
     const chg = item.change
       ? `<div class="mcard-change ${cls}">${item.change}</div>` : '';
     const tips = MARKET_TIPS[item.label];
-    const tipAttrs = tips
-      ? `data-tip-label="${escHtml(item.label)}" aria-expanded="false" aria-controls="info-modal"`
-      : '';
-    const head = tips
-      ? `<div class="mcard-head">
-    <button type="button" class="mcard-label-btn" ${tipAttrs}
-      aria-label="${escHtml(item.label)} 지표 설명">${escHtml(item.label)}</button>
-    <button type="button" class="mcard-info-btn" ${tipAttrs}
-      aria-label="${escHtml(item.label)} 상세 설명">ⓘ</button>
-  </div>`
-      : `<div class="mcard-head"><div class="mcard-label">${escHtml(item.label)}</div></div>`;
     const d = document.createElement('div');
     d.className = `mcard ${cls} fade-in`;
+    if (tips) {
+      d.dataset.tipLabel = item.label;
+      d.setAttribute('role', 'button');
+      d.setAttribute('tabindex', '0');
+      d.setAttribute('aria-expanded', 'false');
+      d.setAttribute('aria-controls', 'info-modal');
+      d.setAttribute('aria-label', `${item.label} 지표 설명`);
+    }
     d.innerHTML = `
-  ${head}
+  <div class="mcard-head"><div class="mcard-label">${escHtml(item.label)}</div></div>
   <div class="mcard-value">${item.value}</div>
   ${chg}
   <div class="mcard-sub">${item.sub}</div>`;
@@ -343,6 +348,10 @@ function chartOpts() {
   return {
     responsive: true,
     maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -684,6 +693,7 @@ async function reloadAll() {
     setBtnState(`btn-${s}`, false);
   });
   setTs('ts-chart', d, false);
+  setBtnState('btn-chart', false);
   document.getElementById('ts-val').textContent = fmtTs(d);
 })();
 
