@@ -328,11 +328,13 @@ function renderNews() {
   MOCK_NEWS.forEach(item => {
     const d = document.createElement('div');
     d.className = 'ncard fade-in';
+    const whyHtml = item.why
+      ? `<div class="ncard-why">${escHtml(item.why)}</div>` : '';
     d.innerHTML = `
   <span class="ncard-tag ${item.tag}">${escHtml(item.tagLabel)}</span>
   <div class="ncard-title">${escHtml(item.title)}</div>
   <div class="ncard-summary">${escHtml(item.summary)}</div>
-  <div class="ncard-why">${escHtml(item.why)}</div>
+  ${whyHtml}
   <div class="ncard-meta">
     <span class="ncard-date">${escHtml(item.date)}</span>
   </div>`;
