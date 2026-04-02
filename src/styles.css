@@ -768,14 +768,42 @@
     color: var(--accent);
     margin-bottom: 8px;
   }
-  .tip-analysis-line {
-    font-size: 12px;
-    line-height: 1.6;
-    color: var(--text);
-    padding: 5px 0;
+  /* 뉴스 기반 분석 */
+  .tip-news-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 7px;
+    padding: 6px 0;
     border-bottom: 1px solid var(--border);
   }
-  .tip-analysis-line:last-child { border-bottom: none; }
+  .tip-news-item:last-child { border-bottom: none; }
+  .tip-news-tag {
+    flex-shrink: 0;
+    font-size: 9px;
+    font-family: var(--mono);
+    padding: 2px 5px;
+    border-radius: 3px;
+    margin-top: 2px;
+    background: #1f2937;
+    color: var(--muted);
+  }
+  .tip-news-tag.tag-연준 { background: #1e3a5f; color: #60a5fa; }
+  .tip-news-tag.tag-리스크 { background: #3b1f1f; color: #f87171; }
+  .tip-news-tag.tag-지정학 { background: #2d1f3b; color: #c084fc; }
+  .tip-news-tag.tag-에너지 { background: #1f2d1f; color: #4ade80; }
+  .tip-news-tag.tag-기술주 { background: #1f2535; color: #38bdf8; }
+  .tip-news-tag.tag-거시  { background: #2a2515; color: #fbbf24; }
+  .tip-news-tag.tag-시장  { background: #1a2535; color: #94a3b8; }
+  .tip-news-title {
+    font-size: 12px;
+    line-height: 1.55;
+    color: #d1d5db;
+  }
+  .tip-no-news {
+    font-size: 11px;
+    color: var(--muted);
+    padding: 4px 0;
+  }
 
   .tip-divider {
     height: 1px;
