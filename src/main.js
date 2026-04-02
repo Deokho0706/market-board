@@ -125,9 +125,16 @@ const INDICATOR_NEWS_MAP = {
   '공포탐욕':     { tags: ['risk','market'], keywords: ['공포','탐욕','투자심리','심리 지수','매도','패닉'] },
 };
 
+// 상승/하락 방향 감지용 키워드
+const POSITIVE_KW = ['상승','반등','호조','개선','강세','증가','회복','성장','상향','돌파','급등','상회','호실적'];
+const NEGATIVE_KW = ['하락','급락','우려','위기','약세','감소','침체','공포','악화','충격','하회','폭락','하락세','약세장'];
+
 function buildAnalysis(label) {
   const config = INDICATOR_NEWS_MAP[label];
-  if (!config || !MOCK_NEWS || MOCK_NEWS.length === 0) return [];
+  const marketItem = MOCK_MARKET.find(m => m.label === label);
+  if (!config || !MOCK_NEWS || MOCK_NEWS.length === 0) return { direction: 0, news: [] };
+
+  const direction = marketItem ? marketItem.raw : 0; // >0 상승, <0 하락
 
   const relevant = MOCK_NEWS.filter(item => {
     const tagMatch = config.tags.includes(item.tag);
@@ -135,12 +142,25 @@ function buildAnalysis(label) {
     return tagMatch || kwMatch;
   });
 
-  // 중복 제거 후 최대 3개
+  // 방향과 일치하는 뉴스에 가중치 부여
+  const scored = relevant.map(item => {
+    const pos = POSITIVE_KW.filter(kw => item.title.includes(kw)).length;
+    const neg = NEGATIVE_KW.filter(kw => item.title.includes(kw)).length;
+    let score = 0;
+    if (direction > 0) score = pos * 2 - neg;   // 상승이면 긍정 뉴스 우선
+    else if (direction < 0) score = neg * 2 - pos; // 하락이면 부정 뉴스 우선
+    else score = pos + neg; // 보합이면 변동 뉴스 전반
+    return { ...item, score };
+  }).sort((a, b) => b.score - a.score);
+
   const seen = new Set();
-  return relevant
-    .filter(item => { if (seen.has(item.title)) return false; seen.add(item.title); return true; })
-    .slice(0, 3)
-    .map(item => ({ tag: item.tagLabel || item.tag, title: item.title, date: item.date }));
+  return {
+    direction,
+    news: scored
+      .filter(item => { if (seen.has(item.title)) return false; seen.add(item.title); return true; })
+      .slice(0, 3)
+      .map(item => ({ tag: item.tagLabel || item.tag, title: item.title, date: item.date }))
+  };
 }
 
 // ────────── INFO MODAL ──────────
@@ -187,11 +207,12 @@ function showTip(trigger) {
       ${marketItem.change ? `<span class="tip-movement-chg ${cls}">${escHtml(marketItem.change)}</span>` : ''}
     </div>` : '';
 
-  // 관련 뉴스 기반 분석
-  const newsItems = buildAnalysis(label);
+  // 관련 뉴스 기반 분석 (방향 반영)
+  const { direction: newsDir, news: newsItems } = buildAnalysis(label);
+  const sectionLabel = newsDir > 0 ? '오늘 상승 배경' : newsDir < 0 ? '오늘 하락 배경' : '관련 뉴스 · 이슈';
   const analysisHtml = newsItems.length > 0
     ? `<div class="tip-section">
-        <div class="tip-section-label">관련 뉴스 · 이슈</div>
+        <div class="tip-section-label">${sectionLabel}</div>
         ${newsItems.map(n => `
           <div class="tip-news-item">
             <span class="tip-news-tag tag-${escHtml(n.tag)}">${escHtml(n.tag)}</span>
@@ -200,7 +221,7 @@ function showTip(trigger) {
        </div>
        <div class="tip-divider"></div>`
     : `<div class="tip-section">
-        <div class="tip-section-label">관련 뉴스 · 이슈</div>
+        <div class="tip-section-label">${sectionLabel}</div>
         <div class="tip-no-news">오늘 관련 뉴스가 없습니다</div>
        </div>
        <div class="tip-divider"></div>`;
