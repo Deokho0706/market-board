@@ -108,6 +108,121 @@ function showSkeleton(gridId, count) {
   ).join('');
 }
 
+// ────────── 오늘의 시장 분석 ──────────
+function buildAnalysis(label) {
+  const get = (l) => MOCK_MARKET.find(m => m.label === l);
+  const item = get(label);
+  if (!item) return [];
+
+  const raw = item.raw;
+  const up = raw > 0, dn = raw < 0;
+
+  const sp    = get('S&P 500');
+  const nq    = get('NASDAQ');
+  const vix   = get('VIX');
+  const dxy   = get('달러인덱스');
+  const krw   = get('달러/원');
+  const us10y = get('미국 10Y');
+  const us2y  = get('미국 2Y');
+  const spr   = get('장단기금리차');
+  const gold  = get('금');
+  const wti   = get('WTI 원유');
+  const fg    = get('공포탐욕');
+  const fed   = get('연준 기준금리');
+
+  const lines = [];
+
+  switch (label) {
+    case 'S&P 500': {
+      if (nq) lines.push(`나스닥 ${nq.change} ${nq.raw > 0 ? '동반 상승 — 기술주 중심 강세' : nq.raw < 0 ? '하락 중 — 기술주와 방향 엇갈림' : '보합'}`);
+      if (vix) lines.push(`VIX ${vix.value} (${vix.change}) — ${parseFloat(vix.value) >= 30 ? '공포 구간, 투자 심리 매우 불안' : parseFloat(vix.value) >= 20 ? '경계 구간, 불안감 남아있음' : '안정 구간, 투자 심리 양호'}`);
+      if (us10y) lines.push(`미국 10Y 금리 ${us10y.value} — ${parseFloat(us10y.value) > 4.5 ? '고금리 부담으로 밸류에이션 압박' : parseFloat(us10y.value) > 4.0 ? '금리 부담 존재, 주시 필요' : '금리 안정권, 증시 부담 낮음'}`);
+      if (fg) lines.push(`공포탐욕 지수 ${fg.value} — ${parseInt(fg.value) <= 25 ? '극단 공포 구간, 역발상 매수 논의 가능' : parseInt(fg.value) <= 45 ? '공포 우세, 추가 하락 경계' : parseInt(fg.value) >= 75 ? '탐욕 과열, 조정 가능성 주의' : '중립 구간'}`);
+      break;
+    }
+    case 'NASDAQ': {
+      if (sp) lines.push(`S&P 500 ${sp.change} ${(sp.raw > 0) === up ? '— 시장 전반 방향 일치' : '— 대형주와 방향 엇갈림'}`);
+      if (vix) lines.push(`VIX ${vix.value} — ${vix.raw < 0 ? '변동성 완화 중, 기술주 반등 여건 형성' : '변동성 확대 — 기술주 특히 민감하게 반응'}`);
+      if (us10y) {
+        const r = parseFloat(us10y.value);
+        lines.push(`10Y 금리 ${us10y.value} — ${r > 4.3 ? '고금리로 성장주 할인율 상승, 나스닥 부담' : '금리 안정적, 기술주 밸류에이션 숨통'}`);
+      }
+      break;
+    }
+    case 'VIX': {
+      if (sp) lines.push(`S&P 500 ${sp.change} — ${(sp.raw > 0 && dn) ? '증시 상승에 VIX 하락, 공포 완화 신호' : (sp.raw < 0 && up) ? '증시 하락에 VIX 상승, 전형적 리스크 오프' : '증시와 VIX 방향 불일치, 혼조세'}`);
+      lines.push(`현재 ${item.value} — ${parseFloat(item.value) >= 30 ? '극단 공포. 시장 패닉 국면 가능성' : parseFloat(item.value) >= 20 ? '경계 구간. 추가 변동성 대비 필요' : '안정 구간. 투자 심리 양호'}`);
+      if (gold) lines.push(`금 ${gold.change} — ${gold.raw > 0 ? '안전자산 선호 강화' : '안전자산 수요 약화, 위험 선호 회복 중'}`);
+      break;
+    }
+    case '달러인덱스': {
+      if (sp) lines.push(`증시 ${sp.change} — ${(up && sp.raw < 0) ? '달러 강세와 주식 동반 약세, 리스크 오프 흐름' : (up && sp.raw > 0) ? '달러·주식 동반 강세, 미국 경제 신뢰 반영 가능' : '달러·주식 방향 엇갈림'}`);
+      if (gold) lines.push(`금 ${gold.change} — ${(up && gold.raw < 0) ? '달러 강세에 금 하락, 전형적 역상관' : '달러·금 동반 움직임, 비전형적 패턴'}`);
+      if (krw) lines.push(`달러/원 ${krw.value} — ${parseFloat(krw.value) > 1400 ? '원화 약세 지속, 수입 물가 부담' : '환율 안정권'}`);
+      if (wti) lines.push(`원유 ${wti.change} — ${(up && wti.raw < 0) ? '달러 강세가 원유 가격 하락 압력으로 작용' : ''}`);
+      break;
+    }
+    case '달러/원': {
+      lines.push(`현재 ${item.value} — ${parseFloat(item.value) > 1450 ? '원화 급격 약세, 외환시장 불안' : parseFloat(item.value) > 1350 ? '원화 약세권, 수입 물가 부담' : '원화 상대적 안정'}`);
+      if (dxy) lines.push(`달러인덱스 ${dxy.change} — ${dxy.raw > 0 ? '달러 전반 강세가 원화 약세 주도' : '달러 약세에도 원화 움직임 주목'}`);
+      if (sp) lines.push(`미국 증시 ${sp.change} — ${sp.raw < 0 ? '위험 자산 회피 심리로 신흥국 통화 약세 압력' : '위험 선호 회복 중'}`);
+      break;
+    }
+    case '미국 10Y': {
+      lines.push(`현재 ${item.value} — ${parseFloat(item.value) > 4.5 ? '장기 금리 고점 영역, 성장주·주택시장 부담' : parseFloat(item.value) > 4.0 ? '금리 부담 구간' : '상대적 안정'}`);
+      if (sp) lines.push(`증시 ${sp.change} — ${(up && sp.raw < 0) ? '금리 상승이 주식 밸류에이션 압박' : (dn && sp.raw > 0) ? '금리 하락에 증시 안도 반등' : '금리·증시 동반 움직임'}`);
+      if (spr) lines.push(`장단기금리차 ${spr.value}% — ${parseFloat(spr.value) < 0 ? '역전 지속, 경기침체 선행 신호' : '정상 기울기 회복 중'}`);
+      break;
+    }
+    case '미국 2Y': {
+      lines.push(`현재 ${item.value} — 연준 정책 기대를 가장 민감하게 반영`);
+      if (us10y) {
+        const diff = (parseFloat(us10y.value || 0) - parseFloat(item.value || 0)).toFixed(2);
+        lines.push(`10Y-2Y 금리차 ${diff}% — ${parseFloat(diff) < 0 ? '역전 상태, 경기침체 우려 유효' : '정상화 진행 중'}`);
+      }
+      if (fed) lines.push(`연준 기준금리 ${fed.value} — ${parseFloat(item.value) < parseFloat(fed.value) ? '2년물이 기준금리 하회, 인하 기대 선반영' : '기준금리 대비 프리미엄 존재'}`);
+      break;
+    }
+    case '장단기금리차': {
+      const val = parseFloat(item.value);
+      lines.push(`현재 ${item.value}% — ${val < 0 ? '역전 상태. 과거 역전 이후 평균 12~18개월 내 침체 발생' : val < 0.5 ? '플러스 전환 중, 완전 정상화까지 시간 필요' : '정상 기울기, 경기 확장 우호적 신호'}`);
+      if (sp) lines.push(`증시 ${sp.change} — ${val < 0 && sp.raw < 0 ? '역전+증시 하락, 경기 우려 확산' : val < 0 && sp.raw > 0 ? '역전에도 증시 버티는 중' : '금리차 정상화와 증시 반등 동반'}`);
+      break;
+    }
+    case '연준 기준금리': {
+      lines.push(`현재 ${item.value} — 시장은 미래 경로를 현재 수준보다 더 중시`);
+      if (us2y) lines.push(`미국 2Y ${us2y.value} — ${parseFloat(us2y.value) < parseFloat(item.value) ? '인하 기대 선반영 중' : '추가 인상 가능성 일부 반영'}`);
+      if (sp) lines.push(`증시 ${sp.change} — 금리 동결·인하 기대가 ${sp.raw > 0 ? '주가 상승을 지지' : '아직 주가를 못 받치는 상황'}`);
+      break;
+    }
+    case 'WTI 원유': {
+      lines.push(`현재 ${item.value} — ${parseFloat(item.value) > 90 ? '고유가 구간, 에너지 인플레 우려 재부각' : parseFloat(item.value) > 70 ? '중립 구간' : '저유가, 디플레 우려 가능성'}`);
+      if (dxy) lines.push(`달러인덱스 ${dxy.change} — ${dxy.raw > 0 ? '달러 강세로 유가 하락 압력' : '달러 약세로 유가 상승 지지'}`);
+      if (sp) lines.push(`증시 ${sp.change} — ${(up && sp.raw > 0) ? '경기 회복 기대로 유가·증시 동반 상승' : (up && sp.raw < 0) ? '공급 이슈로 유가 상승, 증시엔 부담' : ''}`);
+      break;
+    }
+    case '금': {
+      lines.push(`현재 ${item.value} — ${parseFloat(item.value) > 2500 ? '역사적 고점권, 불확실성 반영' : parseFloat(item.value) > 2000 ? '강세 구간' : '중립'}`);
+      if (dxy) lines.push(`달러인덱스 ${dxy.change} — ${(dxy.raw > 0 && dn) ? '달러 강세로 금 하락, 전형적 역상관' : (dxy.raw < 0 && up) ? '달러 약세로 금 상승 지지' : '달러·금 비정형 움직임 — 지정학·인플레 요인 주목'}`);
+      if (vix) lines.push(`VIX ${vix.value} — ${vix.raw > 0 ? '공포 심리 확산, 안전자산 수요 가능' : '공포 완화, 금 매력 다소 감소'}`);
+      break;
+    }
+    case '공포탐욕': {
+      const val = parseInt(item.value);
+      lines.push(val <= 25 ? '극단 공포 구간. 패닉 매도 국면일 수 있음 — 역발상 관점에서 매수 기회 논의 시작' :
+        val <= 45 ? '공포 우세. 투자자들이 위험을 회피하는 상황' :
+        val <= 55 ? '중립. 시장 방향성 불분명' :
+        val <= 75 ? '탐욕 우세. 낙관론이 지배적' :
+        '극단 탐욕. 과열 신호 — 조정 가능성 경계');
+      if (sp) lines.push(`S&P 500 ${sp.change} — ${(val <= 25 && sp.raw < 0) ? '패닉 심리와 하락 동반, 저점 탐색 국면 가능' : (val >= 75 && sp.raw > 0) ? '탐욕+상승 — 추격 매수 시 주의' : '심리 지수와 증시 방향 확인'}`);
+      if (vix) lines.push(`VIX ${vix.value} — ${parseInt(vix.value) > 25 && val <= 25 ? '공포탐욕·VIX 모두 공포 신호 일치' : '심리 지표 교차 확인 권장'}`);
+      break;
+    }
+  }
+
+  return lines.filter(l => l.trim());
+}
+
 // ────────── INFO MODAL ──────────
 let _activeTrigger = null;
 let _infoModalInited = false;
@@ -143,21 +258,35 @@ function showTip(trigger) {
   // 이전 트리거 aria 초기화
   if (_activeTrigger) _activeTrigger.setAttribute('aria-expanded', 'false');
 
+  // 현재 지표값
+  const marketItem = MOCK_MARKET.find(m => m.label === label);
+  const cls = marketItem ? (marketItem.raw > 0 ? 'up' : marketItem.raw < 0 ? 'down' : 'neutral') : '';
+  const movementHtml = marketItem ? `
+    <div class="tip-movement">
+      <span class="tip-movement-val">${escHtml(marketItem.value)}</span>
+      ${marketItem.change ? `<span class="tip-movement-chg ${cls}">${escHtml(marketItem.change)}</span>` : ''}
+    </div>` : '';
+
+  // 동적 분석
+  const analysisLines = buildAnalysis(label);
+  const analysisHtml = analysisLines.length > 0
+    ? `<div class="tip-section">
+        <div class="tip-section-label">오늘의 움직임 해석</div>
+        ${analysisLines.map(l => `<div class="tip-analysis-line">${escHtml(l)}</div>`).join('')}
+       </div>
+       <div class="tip-divider"></div>`
+    : '';
+
   // 콘텐츠 채우기
   modal.innerHTML = `
     <button type="button" class="tip-close-btn" aria-label="설명 닫기">×</button>
     <div id="tip-popover-title" class="tip-title">${escHtml(label)}</div>
-    <div class="tip-row">
-      <div class="tip-row-label def">정의</div>
-      <div>${escHtml(tips.def)}</div>
-    </div>
-    <div class="tip-row">
-      <div class="tip-row-label hint">해석</div>
-      <div>${escHtml(tips.hint)}</div>
-    </div>
-    <div class="tip-row">
-      <div class="tip-row-label warn">주의</div>
-      <div>${escHtml(tips.warn)}</div>
+    ${movementHtml}
+    ${analysisHtml}
+    <div class="tip-section tip-section-meta">
+      <div class="tip-section-label">지표란?</div>
+      <div class="tip-meta-def">${escHtml(tips.def)}</div>
+      <div class="tip-meta-warn">⚠ ${escHtml(tips.warn)}</div>
     </div>`;
 
   modal.classList.add('open');

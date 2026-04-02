@@ -734,8 +734,71 @@
     text-transform: uppercase;
     padding-right: 32px;
   }
+  /* 현재값 배지 */
+  .tip-movement {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .tip-movement-val {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+  }
+  .tip-movement-chg {
+    font-family: var(--mono);
+    font-size: 14px;
+    font-weight: 500;
+  }
+  .tip-movement-chg.up   { color: var(--green); }
+  .tip-movement-chg.down { color: var(--red); }
+  .tip-movement-chg.neutral { color: var(--muted); }
+
+  /* 분석 섹션 */
+  .tip-section { margin-bottom: 12px; }
+  .tip-section-label {
+    font-size: 9px;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent);
+    margin-bottom: 8px;
+  }
+  .tip-analysis-line {
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text);
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tip-analysis-line:last-child { border-bottom: none; }
+
+  .tip-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 12px 0;
+  }
+
+  /* 하단 지표 정의 (보조) */
+  .tip-section-meta .tip-section-label { color: var(--muted); }
+  .tip-meta-def {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 6px;
+  }
+  .tip-meta-warn {
+    font-size: 10px;
+    color: #6b7280;
+    line-height: 1.5;
+  }
+
+  /* 구버전 호환 */
   .tip-row { margin-bottom: 6px; }
-  .tip-row:last-child { margin-bottom: 0; }
   .tip-row-label {
     font-size: 9px;
     font-family: var(--mono);
@@ -744,9 +807,6 @@
     letter-spacing: 0.08em;
     margin-bottom: 2px;
   }
-  .tip-row-label.def  { color: #8a96a8; }
-  .tip-row-label.hint { color: var(--green); }
-  .tip-row-label.warn { color: var(--amber); }
 
   #info-modal-backdrop {
     display: none;
