@@ -4,7 +4,7 @@
  *
  * 데이터 소스
  *  - 확률: Polymarket gamma API (무료, 키 불필요)
- *  - 뉴스: 연합뉴스 경제 RSS (무료, 키 불필요)
+ *  - 뉴스: 한국경제·매일경제·연합뉴스 RSS (무료, 키 불필요)
  */
 
 const fs   = require('fs');
@@ -47,12 +47,37 @@ function todayStr() {
   }).replace(/\. ?/g, '.').replace(/\.$/, '');
 }
 
-// ── 뉴스 태그 자동 분류 ─────────────────────────────────────────
+// ── 뉴스 태그 자동 분류 (우선순위 순) ───────────────────────────
 const TAG_RULES = [
-  { tag: 'fed',   label: '연준',   keywords: ['연준','FOMC','금리인하','기준금리','통화정책','파월','Fed'] },
-  { tag: 'risk',  label: '리스크', keywords: ['리스크','위기','지정학','전쟁','충돌','불안','급락','폭락','공포'] },
-  { tag: 'macro', label: '거시',   keywords: ['GDP','고용','실업','인플레','CPI','소비자물가','경기','무역'] },
-  { tag: 'market',label: '시장',   keywords: ['증시','주가','S&P','나스닥','코스피','주식','채권'] },
+  { tag: 'geo',    label: '지정학', keywords: [
+    '전쟁','종전','휴전','협상','제재','분쟁','긴장','지정학',
+    '중동','우크라이나','러시아','대만','북한','이스라엘','하마스',
+    '관세전쟁','무역분쟁','트럼프 관세','중국 관세',
+  ]},
+  { tag: 'fed',    label: '연준',   keywords: [
+    '연준','FOMC','기준금리','통화정책','파월','금리인하','금리인상',
+    'Fed','연방준비','빅컷','베이비컷',
+  ]},
+  { tag: 'energy', label: '에너지', keywords: [
+    '원유','유가','WTI','OPEC','브렌트','천연가스','에너지','산유국',
+    '석유','배럴','감산','증산',
+  ]},
+  { tag: 'tech',   label: '기술주', keywords: [
+    '반도체','AI','엔비디아','애플','구글','메타','아마존','마이크로소프트',
+    '빅테크','기술주','나스닥 기술','챗GPT','오픈AI',
+  ]},
+  { tag: 'corp',   label: '기업',   keywords: [
+    '실적','어닝','순이익','영업이익','매출','주가 급등','주가 급락',
+    '상장','IPO','배당','자사주','M&A','인수합병',
+  ]},
+  { tag: 'macro',  label: '거시',   keywords: [
+    'GDP','고용','실업','인플레','CPI','PCE','소비자물가','경기','무역',
+    '관세','달러','환율','경기침체','경제성장','소비','생산',
+  ]},
+  { tag: 'market', label: '시장',   keywords: [
+    '증시','주가','S&P','다우','코스피','코스닥','주식','채권','국채',
+    '금리','금값','금 시세','비트코인','암호화폐',
+  ]},
 ];
 
 function classifyTag(title, summary) {
@@ -65,18 +90,23 @@ function classifyTag(title, summary) {
   return { tag: 'macro', tagLabel: '거시' };
 }
 
-// ── 관련성 필터: 주요 금융·시장 키워드 포함 시만 채택 ─────────────
+// ── 관련성 필터 ───────────────────────────────────────────────────
 const MARKET_KEYWORDS = [
-  // 글로벌 시장
+  // 글로벌 증시
   'S&P','나스닥','다우','증시','주가','주식','채권','국채','금리','통화',
   // 연준·중앙은행
   '연준','Fed','FOMC','파월','기준금리','통화정책','금리인하','금리인상',
   // 경제 지표
-  'CPI','PCE','GDP','고용','인플레','경기침체','무역','관세','달러',
-  // 지정학·리스크
-  '트럼프','중국','관세','지정학','전쟁','원유','WTI','금값',
+  'CPI','PCE','GDP','고용','실업','인플레','경기침체','무역','관세','달러','환율',
+  // 지정학·국제
+  '트럼프','중국','러시아','우크라이나','중동','이스라엘','하마스','대만','북한',
+  '전쟁','종전','휴전','제재','지정학',
+  // 원자재
+  '원유','유가','WTI','OPEC','금값','금 시세','천연가스',
   // 기업·산업
-  '실적','어닝','반도체','AI','빅테크','애플','엔비디아',
+  '실적','어닝','반도체','AI','빅테크','애플','엔비디아','나이키','테슬라',
+  // 한국 관련
+  '코스피','코스닥','원·달러','달러/원','한국은행','기재부',
 ];
 
 function isMarketRelevant(title, summary) {
@@ -121,7 +151,6 @@ async function fetchProbability(currentProbability) {
     const fedTwo  = getPct('2');
     const fedOther = Math.max(0, 100 - fedZero - fedOne - fedTwo);
 
-    // 기존 probability 배열 복사 후 값만 교체
     const updated = currentProbability.map(item => {
       if (item.title?.includes('경기침체') && item.type === 'binary') {
         return { ...item, yes: recYes, no: recNo, src: 'Polymarket' };
@@ -145,58 +174,97 @@ async function fetchProbability(currentProbability) {
     return updated;
   } catch (e) {
     console.error('[probability] 실패:', e.message);
-    return null; // 실패 시 기존 데이터 유지
+    return null;
   }
 }
 
-// ── 2) 금융 뉴스 RSS ─────────────────────────────────────────────
+// ── 2) 금융·글로벌 뉴스 RSS ──────────────────────────────────────
 async function fetchNews() {
   console.log('[news] 뉴스 RSS 요청 중...');
-  const RSS_URLS = [
-    'https://www.hankyung.com/feed/finance',   // 한국경제 금융
-    'https://www.hankyung.com/feed/economy',   // 한국경제 경제
-    'https://www.mk.co.kr/rss/40300001/',      // 매일경제 경제
+
+  // 다양한 카테고리의 소스 — 실패해도 나머지로 진행
+  const RSS_SOURCES = [
+    // 국내 금융·경제
+    { url: 'https://www.hankyung.com/feed/finance',      label: '한경 금융' },
+    { url: 'https://www.hankyung.com/feed/economy',      label: '한경 경제' },
+    { url: 'https://www.mk.co.kr/rss/40300001/',         label: '매경 경제' },
+    // 국제·지정학
+    { url: 'https://www.hankyung.com/feed/international',label: '한경 국제' },
+    { url: 'https://www.mk.co.kr/rss/30100041/',         label: '매경 국제' },
+    { url: 'https://www.yna.co.kr/rss/economy.xml',      label: '연합뉴스 경제' },
+    { url: 'https://www.yna.co.kr/rss/international.xml',label: '연합뉴스 국제' },
+    // 기업·산업
+    { url: 'https://www.hankyung.com/feed/it',           label: '한경 IT' },
   ];
 
-  try {
-    const results = [];
-    for (const url of RSS_URLS) {
-      try {
-        const xml = await httpsGet(url);
-        const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
-        for (const [, content] of itemMatches) {
-          const title   = xmlVal(content, 'title');
-          const summary = xmlVal(content, 'description').replace(/<[^>]+>/g, '').slice(0, 150);
-          if (!title || title.length < 5) continue;
-          // 금융·시장 관련 기사만 채택
-          if (!isMarketRelevant(title, summary)) continue;
-          const { tag, tagLabel } = classifyTag(title, summary);
-          results.push({ tag, tagLabel, title, summary, why: '', date: todayStr() });
-        }
-      } catch (e) {
-        console.warn(`[news] ${url} 실패:`, e.message);
+  const results = [];
+
+  for (const source of RSS_SOURCES) {
+    try {
+      const xml = await httpsGet(source.url);
+      const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+      let count = 0;
+      for (const [, content] of itemMatches) {
+        const title   = xmlVal(content, 'title');
+        const rawDesc = xmlVal(content, 'description').replace(/<[^>]+>/g, '').trim();
+        // "(서울=연합뉴스) " 같은 출처 접두어 제거
+        const desc = rawDesc.replace(/^\([^)]+\)\s*/, '').trim();
+        // summary: 80자 이내로 자름
+        const summary = desc ? desc.replace(/\s+/g, ' ').slice(0, 80) + (desc.length > 80 ? '…' : '') : '';
+
+        if (!title || title.length < 5) continue;
+        if (!isMarketRelevant(title, summary)) continue;
+
+        const { tag, tagLabel } = classifyTag(title, summary);
+        results.push({ tag, tagLabel, title, summary, why: '', date: todayStr() });
+        count++;
       }
+      console.log(`[news] ${source.label}: ${count}개`);
+    } catch (e) {
+      console.warn(`[news] ${source.label} 실패:`, e.message);
     }
+  }
 
-    if (results.length === 0) {
-      console.warn('[news] 관련 뉴스를 가져오지 못했습니다.');
-      return null;
-    }
-
-    // 중복 제거 + 최대 6개
-    const seen = new Set();
-    const unique = results.filter(item => {
-      if (seen.has(item.title)) return false;
-      seen.add(item.title);
-      return true;
-    }).slice(0, 6);
-
-    console.log(`[news] ${unique.length}개 뉴스 항목 갱신`);
-    return unique;
-  } catch (e) {
-    console.error('[news] 실패:', e.message);
+  if (results.length === 0) {
+    console.warn('[news] 관련 뉴스를 가져오지 못했습니다.');
     return null;
   }
+
+  // 1단계: 제목 중복 제거
+  const seen = new Set();
+  const deduped = results.filter(item => {
+    if (seen.has(item.title)) return false;
+    seen.add(item.title);
+    return true;
+  });
+
+  // 2단계: summary 있는 항목 우선 정렬 (없는 건 뒤로)
+  deduped.sort((a, b) => (b.summary ? 1 : 0) - (a.summary ? 1 : 0));
+
+  // 3단계: 태그 다양성 확보 (같은 태그 최대 3개) + 최대 15개
+  const tagCount = {};
+  const unique = [];
+
+  for (const item of deduped) {
+    if ((tagCount[item.tag] || 0) >= 3) continue;
+    tagCount[item.tag] = (tagCount[item.tag] || 0) + 1;
+    unique.push(item);
+    if (unique.length >= 15) break;
+  }
+
+  // 4단계: 15개 미만이면 태그 제한 해제 후 보충
+  if (unique.length < 15) {
+    const inUnique = new Set(unique.map(u => u.title));
+    for (const item of deduped) {
+      if (!inUnique.has(item.title)) {
+        unique.push(item);
+        if (unique.length >= 15) break;
+      }
+    }
+  }
+
+  console.log(`[news] 최종 ${unique.length}개 저장 (태그 분포: ${JSON.stringify(tagCount)})`);
+  return unique;
 }
 
 // ── 메인 ─────────────────────────────────────────────────────────

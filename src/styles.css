@@ -794,10 +794,16 @@
   .tip-news-tag.tag-기술주 { background: #1f2535; color: #38bdf8; }
   .tip-news-tag.tag-거시  { background: #2a2515; color: #fbbf24; }
   .tip-news-tag.tag-시장  { background: #1a2535; color: #94a3b8; }
+  .tip-news-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
   .tip-news-title {
     font-size: 12px;
-    line-height: 1.55;
+    line-height: 1.5;
     color: #d1d5db;
+  }
+  .tip-news-summary {
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--muted);
   }
   .tip-no-news {
     font-size: 11px;

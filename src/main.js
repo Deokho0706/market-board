@@ -159,7 +159,7 @@ function buildAnalysis(label) {
     news: scored
       .filter(item => { if (seen.has(item.title)) return false; seen.add(item.title); return true; })
       .slice(0, 3)
-      .map(item => ({ tag: item.tagLabel || item.tag, title: item.title, date: item.date }))
+      .map(item => ({ tag: item.tagLabel || item.tag, title: item.title, summary: item.summary || '', date: item.date }))
   };
 }
 
@@ -216,7 +216,10 @@ function showTip(trigger) {
         ${newsItems.map(n => `
           <div class="tip-news-item">
             <span class="tip-news-tag tag-${escHtml(n.tag)}">${escHtml(n.tag)}</span>
-            <span class="tip-news-title">${escHtml(n.title)}</span>
+            <div class="tip-news-body">
+              <div class="tip-news-title">${escHtml(n.title)}</div>
+              ${n.summary ? `<div class="tip-news-summary">${escHtml(n.summary)}</div>` : ''}
+            </div>
           </div>`).join('')}
        </div>
        <div class="tip-divider"></div>`
