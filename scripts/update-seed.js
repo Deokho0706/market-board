@@ -178,28 +178,63 @@ async function fetchProbability(currentProbability) {
   }
 }
 
+// ── 영문 RSS 태그 분류 ────────────────────────────────────────────
+const EN_TAG_RULES = [
+  { tag: 'geo',    label: '지정학', keywords: ['war','ceasefire','sanction','Iran','Russia','Ukraine','Taiwan','Middle East','Hamas','Israel','tariff war','trade war'] },
+  { tag: 'fed',    label: '연준',   keywords: ['Fed','FOMC','rate cut','rate hike','interest rate','Federal Reserve','Powell','monetary policy'] },
+  { tag: 'energy', label: '에너지', keywords: ['oil','crude','WTI','OPEC','energy','petroleum','natural gas','barrel'] },
+  { tag: 'tech',   label: '기술주', keywords: ['semiconductor','AI','Nvidia','Apple','Google','Meta','Amazon','Microsoft','big tech','OpenAI'] },
+  { tag: 'corp',   label: '기업',   keywords: ['earnings','revenue','profit','quarterly','IPO','dividend','buyback','merger','acquisition'] },
+  { tag: 'macro',  label: '거시',   keywords: ['GDP','jobs','unemployment','inflation','CPI','PCE','recession','trade','tariff','dollar','economy'] },
+  { tag: 'wrap',   label: '시장해설', keywords: ['stocks','S&P','Nasdaq','Dow','market','rally','selloff','futures','Wall Street','equities'] },
+];
+
+function classifyEnTag(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase();
+  for (const rule of EN_TAG_RULES) {
+    if (rule.keywords.some(k => text.includes(k.toLowerCase()))) {
+      return { tag: rule.tag, tagLabel: rule.label };
+    }
+  }
+  return { tag: 'macro', tagLabel: '거시' };
+}
+
+const EN_MARKET_KEYWORDS = [
+  'stock','market','S&P','Nasdaq','Dow','Fed','rate','inflation','oil','GDP',
+  'recession','tariff','trade','earnings','rally','selloff','futures','Wall Street',
+  'Iran','Russia','Ukraine','Taiwan','OPEC','semiconductor','AI',
+];
+
+function isEnMarketRelevant(title, desc) {
+  const text = (title + ' ' + desc).toLowerCase();
+  return EN_MARKET_KEYWORDS.some(k => text.includes(k.toLowerCase()));
+}
+
 // ── 2) 금융·글로벌 뉴스 RSS ──────────────────────────────────────
 async function fetchNews() {
   console.log('[news] 뉴스 RSS 요청 중...');
 
-  // 다양한 카테고리의 소스 — 실패해도 나머지로 진행
-  const RSS_SOURCES = [
-    // 국내 금융·경제
-    { url: 'https://www.hankyung.com/feed/finance',      label: '한경 금융' },
-    { url: 'https://www.hankyung.com/feed/economy',      label: '한경 경제' },
-    { url: 'https://www.mk.co.kr/rss/40300001/',         label: '매경 경제' },
-    // 국제·지정학
-    { url: 'https://www.hankyung.com/feed/international',label: '한경 국제' },
-    { url: 'https://www.mk.co.kr/rss/30100041/',         label: '매경 국제' },
-    { url: 'https://www.yna.co.kr/rss/economy.xml',      label: '연합뉴스 경제' },
-    { url: 'https://www.yna.co.kr/rss/international.xml',label: '연합뉴스 국제' },
-    // 기업·산업
-    { url: 'https://www.hankyung.com/feed/it',           label: '한경 IT' },
+  const KO_SOURCES = [
+    { url: 'https://www.hankyung.com/feed/finance',       label: '한경 금융' },
+    { url: 'https://www.hankyung.com/feed/economy',       label: '한경 경제' },
+    { url: 'https://www.mk.co.kr/rss/40300001/',          label: '매경 경제' },
+    { url: 'https://www.hankyung.com/feed/international', label: '한경 국제' },
+    { url: 'https://www.mk.co.kr/rss/30100041/',          label: '매경 국제' },
+    { url: 'https://www.yna.co.kr/rss/economy.xml',       label: '연합뉴스 경제' },
+    { url: 'https://www.yna.co.kr/rss/international.xml', label: '연합뉴스 국제' },
+    { url: 'https://www.hankyung.com/feed/it',            label: '한경 IT' },
+  ];
+
+  // 시장 움직임을 직접 설명하는 영문 소스 (시장해설 전문)
+  const EN_SOURCES = [
+    { url: 'https://feeds.content.dowjones.io/public/rss/mw_topstories',  label: 'MarketWatch' },
+    { url: 'https://www.cnbc.com/id/10001147/device/rss/rss.html',        label: 'CNBC Markets' },
   ];
 
   const results = [];
 
-  for (const source of RSS_SOURCES) {
+  // 국내 뉴스
+  for (const source of KO_SOURCES) {
     try {
       const xml = await httpsGet(source.url);
       const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
@@ -207,16 +242,14 @@ async function fetchNews() {
       for (const [, content] of itemMatches) {
         const title   = xmlVal(content, 'title');
         const rawDesc = xmlVal(content, 'description').replace(/<[^>]+>/g, '').trim();
-        // "(서울=연합뉴스) " 같은 출처 접두어 제거
-        const desc = rawDesc.replace(/^\([^)]+\)\s*/, '').trim();
-        // summary: 80자 이내로 자름
+        const desc    = rawDesc.replace(/^\([^)]+\)\s*/, '').trim();
         const summary = desc ? desc.replace(/\s+/g, ' ').slice(0, 80) + (desc.length > 80 ? '…' : '') : '';
 
         if (!title || title.length < 5) continue;
         if (!isMarketRelevant(title, summary)) continue;
 
         const { tag, tagLabel } = classifyTag(title, summary);
-        results.push({ tag, tagLabel, title, summary, why: '', date: todayStr() });
+        results.push({ tag, tagLabel, title, summary, why: '', date: todayStr(), lang: 'ko' });
         count++;
       }
       console.log(`[news] ${source.label}: ${count}개`);
@@ -225,45 +258,73 @@ async function fetchNews() {
     }
   }
 
-  if (results.length === 0) {
+  // 영문 시장해설 뉴스 (별도 처리, 최대 3개)
+  const enResults = [];
+  for (const source of EN_SOURCES) {
+    try {
+      const xml = await httpsGet(source.url);
+      const itemMatches = [...xml.matchAll(/<item>([\s\S]*?)<\/item>/g)];
+      let count = 0;
+      for (const [, content] of itemMatches) {
+        const title   = xmlVal(content, 'title').replace(/&#x[\da-f]+;/gi, s => String.fromCharCode(parseInt(s.slice(3,-1),16))).replace(/&amp;/g,'&').replace(/&apos;/g,"'").replace(/&quot;/g,'"').trim();
+        const rawDesc = xmlVal(content, 'description').replace(/<[^>]+>/g,'').trim();
+        const desc    = rawDesc.replace(/&#x[\da-f]+;/gi, s => String.fromCharCode(parseInt(s.slice(3,-1),16))).replace(/&amp;/g,'&').replace(/&apos;/g,"'").trim();
+        const summary = desc ? desc.replace(/\s+/g,' ').slice(0, 80) + (desc.length > 80 ? '…' : '') : '';
+
+        if (!title || title.length < 5) continue;
+        if (!isEnMarketRelevant(title, desc)) continue;
+
+        // 영문 시장해설 소스는 tag를 'wrap'으로 고정
+        enResults.push({ tag: 'wrap', tagLabel: '시장해설', title, summary, why: '', date: todayStr(), lang: 'en' });
+        count++;
+        if (enResults.length >= 3) break;
+      }
+      console.log(`[news] ${source.label}: ${count}개`);
+      if (enResults.length >= 3) break;
+    } catch (e) {
+      console.warn(`[news] ${source.label} 실패:`, e.message);
+    }
+  }
+  console.log(`[news] 영문 시장해설: ${enResults.length}개`);
+
+  if (results.length === 0 && enResults.length === 0) {
     console.warn('[news] 관련 뉴스를 가져오지 못했습니다.');
     return null;
   }
 
-  // 1단계: 제목 중복 제거
+  // 1단계: 국내 뉴스 중복 제거 + summary 우선 정렬
   const seen = new Set();
   const deduped = results.filter(item => {
     if (seen.has(item.title)) return false;
     seen.add(item.title);
     return true;
   });
-
-  // 2단계: summary 있는 항목 우선 정렬 (없는 건 뒤로)
   deduped.sort((a, b) => (b.summary ? 1 : 0) - (a.summary ? 1 : 0));
 
-  // 3단계: 태그 다양성 확보 (같은 태그 최대 3개) + 최대 15개
+  // 2단계: 태그 다양성 확보 (같은 태그 최대 3개) + 최대 12개
   const tagCount = {};
-  const unique = [];
-
+  const koUnique = [];
   for (const item of deduped) {
     if ((tagCount[item.tag] || 0) >= 3) continue;
     tagCount[item.tag] = (tagCount[item.tag] || 0) + 1;
-    unique.push(item);
-    if (unique.length >= 15) break;
+    koUnique.push(item);
+    if (koUnique.length >= 12) break;
   }
-
-  // 4단계: 15개 미만이면 태그 제한 해제 후 보충
-  if (unique.length < 15) {
-    const inUnique = new Set(unique.map(u => u.title));
+  // 12개 미만이면 태그 제한 해제 후 보충
+  if (koUnique.length < 12) {
+    const inK = new Set(koUnique.map(u => u.title));
     for (const item of deduped) {
-      if (!inUnique.has(item.title)) {
-        unique.push(item);
-        if (unique.length >= 15) break;
-      }
+      if (!inK.has(item.title)) { koUnique.push(item); if (koUnique.length >= 12) break; }
     }
   }
 
-  console.log(`[news] 최종 ${unique.length}개 저장 (태그 분포: ${JSON.stringify(tagCount)})`);
+  // 3단계: 영문 시장해설을 앞에 배치 (최대 3개) + 국내 뉴스
+  const unique = [...enResults, ...koUnique].slice(0, 15);
+
+  const finalTagDist = {};
+  unique.forEach(i => { finalTagDist[i.tagLabel] = (finalTagDist[i.tagLabel] || 0) + 1; });
+  console.log(`[news] 최종 ${unique.length}개 저장 (영문 ${enResults.length}개 포함)`);
+  console.log(`[news] 태그 분포: ${JSON.stringify(finalTagDist)}`);
   return unique;
 }
 

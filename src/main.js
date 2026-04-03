@@ -111,18 +111,18 @@ function showSkeleton(gridId, count) {
 // ────────── 오늘의 시장 분석 (뉴스 기반) ──────────
 // 지표별 관련 태그 + 제목 키워드 매핑
 const INDICATOR_NEWS_MAP = {
-  'S&P 500':      { tags: ['market','macro','risk','geo'], keywords: ['증시','S&P','주가','뉴욕','미국 주식','다우','다우존스','관세','트럼프'] },
-  'NASDAQ':       { tags: ['market','macro','risk','tech'], keywords: ['나스닥','기술주','빅테크','반도체','AI','엔비디아','애플','구글','마이크로소프트','메타','아마존'] },
-  'VIX':          { tags: ['risk','market','geo'], keywords: ['변동성','공포','불확실성','패닉','급락','급등','충격'] },
-  '달러인덱스':   { tags: ['macro','fed','geo'], keywords: ['달러','DXY','강달러','약달러','달러 강세','달러 약세'] },
+  'S&P 500':      { tags: ['wrap','market','macro','geo','risk'], keywords: ['증시','S&P','주가','뉴욕','미국 주식','다우','다우존스','관세','트럼프','stocks','Wall Street','futures'] },
+  'NASDAQ':       { tags: ['wrap','tech','market','macro','risk'], keywords: ['나스닥','기술주','빅테크','반도체','AI','엔비디아','애플','구글','마이크로소프트','메타','아마존','Nasdaq','tech stocks'] },
+  'VIX':          { tags: ['wrap','risk','market','geo'], keywords: ['변동성','공포','불확실성','패닉','급락','급등','충격','volatility','selloff','rally'] },
+  '달러인덱스':   { tags: ['wrap','macro','fed','geo'], keywords: ['달러','DXY','강달러','약달러','달러 강세','달러 약세','dollar'] },
   '달러/원':      { tags: ['macro','risk'], keywords: ['원화','달러/원','환율','외환','원·달러','원달러'] },
-  '미국 10Y':     { tags: ['fed','macro'], keywords: ['10년물','국채','장기금리','채권','트레저리'] },
-  '미국 2Y':      { tags: ['fed','macro'], keywords: ['2년물','단기금리','연준','FOMC','금리 기대'] },
-  '장단기금리차': { tags: ['fed','macro'], keywords: ['금리차','역전','침체','경기침체','경기 둔화'] },
-  '연준 기준금리':{ tags: ['fed'], keywords: ['연준','FOMC','기준금리','금리 인상','금리 인하','파월','Fed'] },
-  'WTI 원유':     { tags: ['macro','risk','energy','geo'], keywords: ['원유','유가','WTI','OPEC','에너지','산유국','석유'] },
-  '금':           { tags: ['risk','macro','geo'], keywords: ['금값','금 가격','금 시세','귀금속','안전자산','금 최고'] },
-  '공포탐욕':     { tags: ['risk','market'], keywords: ['공포','탐욕','투자심리','심리 지수','매도','패닉'] },
+  '미국 10Y':     { tags: ['fed','macro'], keywords: ['10년물','국채','장기금리','채권','트레저리','Treasury','bond yield'] },
+  '미국 2Y':      { tags: ['fed','macro'], keywords: ['2년물','단기금리','연준','FOMC','금리 기대','rate cut','rate hike'] },
+  '장단기금리차': { tags: ['fed','macro'], keywords: ['금리차','역전','침체','경기침체','경기 둔화','yield curve','recession'] },
+  '연준 기준금리':{ tags: ['fed','wrap'], keywords: ['연준','FOMC','기준금리','금리 인상','금리 인하','파월','Fed','Federal Reserve','interest rate'] },
+  'WTI 원유':     { tags: ['energy','geo','macro'], keywords: ['원유','유가','WTI','OPEC','에너지','산유국','석유','oil','crude','barrel'] },
+  '금':           { tags: ['risk','macro','geo'], keywords: ['금값','금 가격','금 시세','귀금속','안전자산','금 최고','gold'] },
+  '공포탐욕':     { tags: ['wrap','risk','market'], keywords: ['공포','탐욕','투자심리','심리 지수','매도','패닉','fear','greed','sentiment'] },
 };
 
 // 상승/하락 방향 감지용 키워드
@@ -142,21 +142,27 @@ function buildAnalysis(label) {
     return tagMatch || kwMatch;
   });
 
-  // 방향과 일치하는 뉴스에 가중치 부여
-  const scored = relevant.map(item => {
+  // wrap 태그(영문 시장해설)는 최상단 고정, 나머지는 방향 스코어링
+  const wrapItems = relevant.filter(item => item.tag === 'wrap');
+  const otherItems = relevant.filter(item => item.tag !== 'wrap');
+
+  const scored = otherItems.map(item => {
     const pos = POSITIVE_KW.filter(kw => item.title.includes(kw)).length;
     const neg = NEGATIVE_KW.filter(kw => item.title.includes(kw)).length;
     let score = 0;
-    if (direction > 0) score = pos * 2 - neg;   // 상승이면 긍정 뉴스 우선
-    else if (direction < 0) score = neg * 2 - pos; // 하락이면 부정 뉴스 우선
-    else score = pos + neg; // 보합이면 변동 뉴스 전반
+    if (direction > 0) score = pos * 2 - neg;
+    else if (direction < 0) score = neg * 2 - pos;
+    else score = pos + neg;
     return { ...item, score };
   }).sort((a, b) => b.score - a.score);
+
+  // wrap 먼저, 나머지 뒤에
+  const merged = [...wrapItems, ...scored];
 
   const seen = new Set();
   return {
     direction,
-    news: scored
+    news: merged
       .filter(item => { if (seen.has(item.title)) return false; seen.add(item.title); return true; })
       .slice(0, 3)
       .map(item => ({ tag: item.tagLabel || item.tag, title: item.title, summary: item.summary || '', date: item.date }))
@@ -209,7 +215,7 @@ function showTip(trigger) {
 
   // 관련 뉴스 기반 분석 (방향 반영)
   const { direction: newsDir, news: newsItems } = buildAnalysis(label);
-  const sectionLabel = newsDir > 0 ? '오늘 상승 배경' : newsDir < 0 ? '오늘 하락 배경' : '관련 뉴스 · 이슈';
+  const sectionLabel = '오늘 주요 이슈';
   const analysisHtml = newsItems.length > 0
     ? `<div class="tip-section">
         <div class="tip-section-label">${sectionLabel}</div>
