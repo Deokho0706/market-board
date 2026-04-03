@@ -318,6 +318,105 @@ function updateStatusBadge(meta) {
   el.dataset.status = meta.status ?? '';
 }
 
+// ────────── FINANCIAL PLUMBING ──────────
+function renderPlumbing() {
+  const container = document.getElementById('plumbing-section');
+  if (!container) return;
+
+  const getVal = (label) => {
+    const item = MOCK_MARKET.find(m => m.label === label);
+    if (!item) return null;
+    const n = parseFloat(String(item.value).replace(/[^0-9.-]/g, ''));
+    return isNaN(n) ? null : n;
+  };
+
+  const fedfunds = getVal('연준 기준금리');
+  const us10y    = getVal('미국 10Y');
+  const us2y     = getVal('미국 2Y');
+  const spread   = getVal('장단기금리차');
+  const dxy      = getVal('달러인덱스');
+  const krw      = getVal('달러/원');
+  const vix      = getVal('VIX');
+
+  const fmtFixed = (v, d = 2, suffix = '') => v !== null ? `${v.toFixed(d)}${suffix}` : '—';
+
+  // ── 단계별 상태 판정 ──
+  const stage1 = fedfunds === null ? 'unknown' : fedfunds > 4.5 ? 'friction' : 'smooth';
+  const stage2 = spread   === null ? 'unknown' : spread < 0 ? 'blocked' : spread < 0.5 ? 'friction' : 'smooth';
+  const stage3 = dxy      === null ? 'unknown' : dxy > 106 ? 'friction' : 'smooth';
+  const stage4 = vix      === null ? 'unknown' : vix > 40 ? 'panic' : vix > 30 ? 'blocked' : vix > 20 ? 'friction' : 'smooth';
+
+  const BADGE = {
+    smooth:  { label: '원활', cls: 'status-smooth' },
+    friction:{ label: '마찰', cls: 'status-friction' },
+    blocked: { label: '경색', cls: 'status-blocked' },
+    panic:   { label: '패닉', cls: 'status-panic' },
+    unknown: { label: '—',   cls: 'status-unknown' },
+  };
+
+  const stages = [
+    { label: '중앙은행 유동성', sub: `연준 ${fmtFixed(fedfunds, 2, '%')} · 10Y ${fmtFixed(us10y, 2, '%')}`, status: stage1, hint: '기준금리가 시중 자금 공급의 출발점' },
+    { label: '단기자금시장',   sub: `2Y ${fmtFixed(us2y, 2, '%')} · 스프레드 ${fmtFixed(spread, 2, '%')}`,  status: stage2, hint: '역전(음수) 시 경기침체 경고 신호' },
+    { label: '글로벌 달러·환율', sub: `DXY ${fmtFixed(dxy, 2)} · ₩${krw !== null ? Math.round(krw).toLocaleString() : '—'}`, status: stage3, hint: '강달러는 신흥국·원자재 압박 요인' },
+    { label: '신용·실물 리스크', sub: `VIX ${fmtFixed(vix, 1)}`,                                             status: stage4, hint: 'VIX 20↑ 경계, 30↑ 위기, 40↑ 패닉' },
+  ];
+
+  const arrowSvg = `<svg viewBox="0 0 28 8" width="28" height="8" fill="none"><path d="M0 4H22M18 1L24 4L18 7" stroke="currentColor" stroke-width="1.5"/></svg>`;
+
+  const pipelineHtml = stages.map((s, i) => {
+    const b = BADGE[s.status];
+    return `
+      <div class="pipe-stage">
+        <div class="pipe-stage-inner" title="${escHtml(s.hint)}">
+          <div class="pipe-label">${escHtml(s.label)}</div>
+          <div class="pipe-sub">${escHtml(s.sub)}</div>
+          <span class="pipe-badge ${b.cls}">${b.label}</span>
+        </div>
+        ${i < stages.length - 1 ? `<div class="pipe-arrow">${arrowSvg}</div>` : ''}
+      </div>`;
+  }).join('');
+
+  // ── VIX 게이지 ──
+  // 스케일: 0–50, 구간: 0–15(낙관/30%) · 15–20(안정/10%) · 20–30(경계/20%) · 30–40(위기/20%) · 40–50(패닉/20%)
+  const vixMax = 50;
+  const vixPct = vix !== null ? Math.min((vix / vixMax) * 100, 100) : null;
+  const vixZone = vix === null ? '—' : vix >= 40 ? '패닉' : vix >= 30 ? '위기' : vix >= 20 ? '경계' : vix >= 15 ? '안정' : '낙관';
+  const vixColor = vix === null ? 'var(--muted)'
+    : vix >= 40 ? '#c084fc' : vix >= 30 ? '#f87171' : vix >= 20 ? '#fbbf24' : '#4ade80';
+
+  const markerHtml = vixPct !== null
+    ? `<div class="vix-marker" style="left:${vixPct.toFixed(1)}%"></div>` : '';
+
+  container.innerHTML = `
+    <div class="plumbing-pipeline">${pipelineHtml}</div>
+    <div class="vix-gauge-wrap">
+      <div class="vix-gauge-header">
+        <span class="vix-gauge-title">변동성 게이지 (VIX)</span>
+        <span class="vix-gauge-value" style="color:${vixColor}">
+          ${vix !== null ? vix.toFixed(1) : '—'}<span class="vix-zone-badge">${vixZone}</span>
+        </span>
+      </div>
+      <div class="vix-bar-container">
+        <div class="vix-bar">${markerHtml}</div>
+        <div class="vix-ticks">
+          <span style="left:0%">0</span>
+          <span style="left:30%">15</span>
+          <span style="left:40%">20</span>
+          <span style="left:60%">30</span>
+          <span style="left:80%">40</span>
+          <span style="left:100%">50+</span>
+        </div>
+        <div class="vix-zone-labels">
+          <span style="left:15%">낙관</span>
+          <span style="left:35%">안정</span>
+          <span style="left:50%">경계</span>
+          <span style="left:70%">위기</span>
+          <span style="left:90%">패닉</span>
+        </div>
+      </div>
+    </div>`;
+}
+
 // ────────── RENDER ──────────
 function renderMarket() {
   const g = document.getElementById('market-grid');
@@ -607,6 +706,7 @@ async function simulateFetch(section) {
           }
         };
         updateFredItem("미국 10Y", apiData.us10y);
+        updateFredItem("미국 2Y", apiData.us2y);
         updateFredItem("장단기금리차", apiData.spread);
         updateFredItem("연준 기준금리", apiData.fedfunds);
 
@@ -694,7 +794,7 @@ async function reloadSection(section) {
     await simulateFetch(section);
     // FIX: fetch 완료 이후에 캐시 타임스탬프 기록 (원본은 fetch 전에 기록)
     CACHE[section] = Date.now();
-    if (section === 'market') renderMarket();
+    if (section === 'market') { renderMarket(); renderPlumbing(); }
     if (section === 'prob') renderProb();
     if (section === 'news') renderNews();
     setTs(`ts-${section}`, new Date(CACHE[section]), false);
@@ -738,6 +838,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  renderPlumbing();
   initInfoModal();
   renderProb();
   renderNews();
@@ -772,6 +873,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  renderPlumbing();
   renderProb();
   renderNews();
   buildCharts();

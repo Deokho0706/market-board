@@ -211,6 +211,191 @@
     color: var(--amber);
   }
 
+  /* ── FINANCIAL PLUMBING ── */
+  .plumbing-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .plumbing-pipeline {
+    display: flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    overflow-x: auto;
+    gap: 0;
+  }
+
+  .pipe-stage {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 148px;
+  }
+
+  .pipe-stage-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    cursor: default;
+  }
+
+  .pipe-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--mono);
+    letter-spacing: 0.02em;
+  }
+
+  .pipe-sub {
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+  }
+
+  .pipe-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    width: fit-content;
+    letter-spacing: 0.03em;
+    margin-top: 2px;
+  }
+
+  .status-smooth   { background: rgba(20,83,45,.25);  color: #4ade80; border: 1px solid rgba(20,83,45,.6); }
+  .status-friction { background: rgba(69,26,3,.25);   color: #fbbf24; border: 1px solid rgba(69,26,3,.6); }
+  .status-blocked  { background: rgba(76,5,25,.25);   color: #f87171; border: 1px solid rgba(76,5,25,.6); }
+  .status-panic    { background: rgba(59,7,100,.25);  color: #c084fc; border: 1px solid rgba(59,7,100,.6); }
+  .status-unknown  { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+
+  .pipe-arrow {
+    color: var(--border2);
+    padding: 0 6px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  /* VIX Gauge */
+  .vix-gauge-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 24px 20px;
+  }
+
+  .vix-gauge-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 14px;
+  }
+
+  .vix-gauge-title {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .vix-gauge-value {
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--mono);
+  }
+
+  .vix-zone-badge {
+    font-size: 11px;
+    font-weight: 500;
+    margin-left: 6px;
+    opacity: 0.8;
+  }
+
+  .vix-bar-container {
+    position: relative;
+    padding-bottom: 28px;
+  }
+
+  .vix-bar {
+    position: relative;
+    height: 10px;
+    border-radius: 5px;
+    overflow: visible;
+    background: linear-gradient(to right,
+      #1d4ed8 0%,   #1d4ed8 30%,
+      #16a34a 30%,  #16a34a 40%,
+      #d97706 40%,  #d97706 60%,
+      #dc2626 60%,  #dc2626 80%,
+      #7c3aed 80%,  #7c3aed 100%
+    );
+  }
+
+  .vix-marker {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px rgba(0,0,0,.6), 0 0 8px rgba(255,255,255,.4);
+    z-index: 2;
+    transition: left 0.5s ease;
+  }
+
+  .vix-ticks {
+    position: absolute;
+    top: 14px;
+    left: 0; right: 0;
+    height: 14px;
+  }
+
+  .vix-ticks span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 10px;
+    color: var(--muted);
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  .vix-zone-labels {
+    position: absolute;
+    top: 28px;
+    left: 0; right: 0;
+    height: 14px;
+  }
+
+  .vix-zone-labels span {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 9px;
+    color: var(--muted);
+    opacity: 0.55;
+    font-family: var(--mono);
+    white-space: nowrap;
+  }
+
+  @media (max-width: 768px) {
+    .plumbing-pipeline {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 14px;
+    }
+    .pipe-stage { width: 100%; }
+    .pipe-arrow { display: none; }
+  }
+
   /* ── MARKET CARDS ── */
   .cards-grid {
     display: grid;

@@ -210,6 +210,79 @@ function isEnMarketRelevant(title, desc) {
   return EN_MARKET_KEYWORDS.some(k => text.includes(k.toLowerCase()));
 }
 
+// ── 2-A) 네이버 뉴스 검색 API (키 있을 때만 실행) ─────────────────
+async function fetchNaverNews() {
+  const CLIENT_ID     = process.env.NAVER_CLIENT_ID;
+  const CLIENT_SECRET = process.env.NAVER_CLIENT_SECRET;
+
+  if (!CLIENT_ID || !CLIENT_SECRET) {
+    console.log('[naver] API 키 없음 — 건너뜀 (NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 미설정)');
+    return [];
+  }
+
+  console.log('[naver] 뉴스 검색 API 요청 중...');
+
+  // 지표별 검색 키워드 목록 (최신·관련성 높은 뉴스 수집)
+  const QUERIES = [
+    '미국 증시 오늘',
+    '연준 금리 FOMC',
+    '달러 환율 원화',
+    '유가 원유 OPEC',
+    '반도체 주가 빅테크',
+    '경기침체 인플레 CPI',
+    '지정학 전쟁 종전 협상',
+  ];
+
+  const results = [];
+
+  for (const query of QUERIES) {
+    try {
+      const encoded = encodeURIComponent(query);
+      const raw = await new Promise((resolve, reject) => {
+        const options = {
+          hostname: 'openapi.naver.com',
+          path: `/v1/search/news.json?query=${encoded}&display=5&sort=date`,
+          headers: {
+            'X-Naver-Client-Id':     CLIENT_ID,
+            'X-Naver-Client-Secret': CLIENT_SECRET,
+            'User-Agent': 'market-board-updater',
+          }
+        };
+        const req = https.get(options, res => {
+          let data = '';
+          res.on('data', chunk => data += chunk);
+          res.on('end', () => resolve(data));
+        });
+        req.on('error', reject);
+        req.setTimeout(8000, () => { req.destroy(); reject(new Error('timeout')); });
+      });
+
+      const json = JSON.parse(raw);
+      if (!json.items) continue;
+
+      for (const item of json.items) {
+        const title   = item.title?.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim();
+        const rawDesc = item.description?.replace(/<[^>]+>/g, '').replace(/&quot;/g, '"').replace(/&amp;/g, '&').trim() || '';
+        const summary = rawDesc ? rawDesc.replace(/\s+/g, ' ').slice(0, 80) + (rawDesc.length > 80 ? '…' : '') : '';
+
+        if (!title || title.length < 5) continue;
+        if (!isMarketRelevant(title, summary)) continue;
+
+        const { tag, tagLabel } = classifyTag(title, summary);
+        results.push({ tag, tagLabel, title, summary, why: '', date: todayStr(), lang: 'ko', src: 'naver' });
+      }
+
+      // API rate limit 방지: 쿼리 사이 300ms 대기
+      await new Promise(r => setTimeout(r, 300));
+    } catch (err) {
+      console.warn(`[naver] 쿼리 '${query}' 실패:`, err.message);
+    }
+  }
+
+  console.log(`[naver] ${results.length}개 항목 수집`);
+  return results;
+}
+
 // ── 2) 금융·글로벌 뉴스 RSS ──────────────────────────────────────
 async function fetchNews() {
   console.log('[news] 뉴스 RSS 요청 중...');
@@ -287,14 +360,18 @@ async function fetchNews() {
   }
   console.log(`[news] 영문 시장해설: ${enResults.length}개`);
 
-  if (results.length === 0 && enResults.length === 0) {
+  // 네이버 뉴스 병합 (키 있을 때만)
+  const naverResults = await fetchNaverNews();
+  const allKo = [...results, ...naverResults];
+
+  if (allKo.length === 0 && enResults.length === 0) {
     console.warn('[news] 관련 뉴스를 가져오지 못했습니다.');
     return null;
   }
 
   // 1단계: 국내 뉴스 중복 제거 + summary 우선 정렬
   const seen = new Set();
-  const deduped = results.filter(item => {
+  const deduped = allKo.filter(item => {
     if (seen.has(item.title)) return false;
     seen.add(item.title);
     return true;

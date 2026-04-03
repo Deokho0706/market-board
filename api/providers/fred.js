@@ -1,7 +1,7 @@
 import { withTimeout } from '../utils/errors.js';
 
 async function getLatestValue(apiKey, seriesId) {
-  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=5`;
+  const url = `https://api.stlouisfed.org/fred/series/observations?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=10`;
   const response = await fetch(url);
   if (!response.ok) return null;
 
