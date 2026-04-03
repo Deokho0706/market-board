@@ -91,8 +91,8 @@
     {
       "type": "binary",
       "title": "미국 2026년 경기침체 진입",
-      "yes": 30,
-      "no": 71,
+      "yes": 33,
+      "no": 68,
       "src": "Polymarket"
     },
     {
@@ -108,18 +108,18 @@
       "outcomes": [
         {
           "label": "0회 (동결)",
-          "pct": 32
+          "pct": 31
         },
         {
           "label": "1회 (25bp)",
-          "pct": 28
+          "pct": 27
         },
         {
           "label": "2회 (50bp)",
-          "pct": 20
+          "pct": 19
         }
       ],
-      "other": 20,
+      "other": 23,
       "src": "Polymarket"
     },
     {
@@ -141,52 +141,139 @@
   ],
   "news": [
     {
-      "tag": "fed",
-      "tagLabel": "연준",
-      "title": "2022년 긴축의 기시감…트럼프 전쟁이 통화정책 피벗 앞당길까",
-      "summary": "",
+      "tag": "wrap",
+      "tagLabel": "시장해설",
+      "title": "Stock futures sink as Trump says U.S. on track to complete Iran objectives ‘very shortly’",
+      "summary": "U.S. stock futures sank Wednesday night as President Donald Trump didn’t offer i…",
       "why": "",
-      "date": "2026.04.02"
+      "date": "2026.04.02",
+      "lang": "en"
+    },
+    {
+      "tag": "wrap",
+      "tagLabel": "시장해설",
+      "title": "‘We’re aiming for a monthly income of $11,500’: I’m 64. I’ve $1.5 million in a 401(k). How do I time my withdrawals?",
+      "summary": "“I plan to start collecting my Social Security of $4,100 at 68.”",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "en"
+    },
+    {
+      "tag": "wrap",
+      "tagLabel": "시장해설",
+      "title": "‘I’m finding it frustrating’: Why $4-a-gallon gas prices feel a lot worse this time around",
+      "summary": "Amid fears of stagflation, persistently high interest rates and a weakening labo…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "en"
+    },
+    {
+      "tag": "geo",
+      "tagLabel": "지정학",
+      "title": "“잘 알지도 못하면서”…트럼프 ‘석기시대’ 경고에 이란군이 한 말",
+      "summary": "이란군은 도널드 트럼프 대통령이 ‘2~3주간 강한 타격’을 예고한 것에 대해 “영원한 후회와 항복”이 있을 때까지 전쟁을 계속하겠다는 항전 의지…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "tech",
+      "tagLabel": "기술주",
+      "title": "[기고] K금형 이어갈 '제조AI' 시급하다",
+      "summary": "대한민국 제조업의 근간인 뿌리산업, 그중에서도 금형산업의 현실은 '산업의 노령화'라는 말로 설명하기 부족하다. 기계가 돌아가고 납기는 맞추고 있…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "tech",
+      "tagLabel": "기술주",
+      "title": "[기자24시] 터보퀀트 해프닝이 주는 교훈",
+      "summary": "지난 3월 24일 구글이 '터보퀀트'라는 논문을 공개했다. 양자화를 통해서 인공지능(AI) 모델의 크기를 축소해 메모리 사용을 줄이는 이 기술은…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "geo",
+      "tagLabel": "지정학",
+      "title": "[단독]靑, 호르무즈 통행료 납부 신중 검토…“국제법 원칙 준수하며 경제성 검토”",
+      "summary": "원유 수급 숨통 틔우고 韓선박 26척 안전 최우선 실용 관점서 살펴보기로청와대가 이란 당국에 호르무즈 해협 통행료를 내고 중동산 원유·가스를 들…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "geo",
+      "tagLabel": "지정학",
+      "title": "“내 차 기름은 내가 만든다”…고유가에 ‘폐식용유’로 디젤로 만드는 남자",
+      "summary": "최근 중동 정세 불안으로 인한 국제 유가 폭등하는 가운데 치솟는 기름값을 견디다 못해 스스로 자동차 연료를 만들어 사용하는 호주 남성이 등장해 …",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "corp",
+      "tagLabel": "기업",
+      "title": "리튬가 상승에 어닝서프라이즈 기대...엘앤에프 10% 급등",
+      "summary": "양극재 전문 기업 엘앤에프 주가가 하루 새 10% 가까이 급등하며 52주 최고가를 경신했다. 양극재 원재료인 리튬 가격 상승에 따른 어닝서프라이…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "tech",
+      "tagLabel": "기술주",
+      "title": "'터보퀀트 쇼크' 얼마나 가나…삼전닉스에 쏠린 눈 [빅데이터로 본 재테크]",
+      "summary": "구글이 인공지능(AI) 압축 기술 '터보퀀트'를 공개한 이후 삼성전자와 SK하이닉스 등 국내 반도체 대장주 투자심리에 빨간불이 켜졌다. AI 메…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "energy",
+      "tagLabel": "에너지",
+      "title": "신한카드, 유류비 부담 완화 나선다…주유 특화 카드 혜택 확대",
+      "summary": "신한카드는 최근 유가 상승으로 인한 고객 부담을 완화하기 위해 주유 특화 카드 관련 혜택을 확대한다고 2일 밝혔다. 먼저 주유 할인 신용 카드를…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "corp",
+      "tagLabel": "기업",
+      "title": "“200만원 넘는다”...미국 공장 접수한 삼성바이오, 목표주가 상향 [오늘, 이 종목]",
+      "summary": "하나證 “고환율·생산시설 확보로 호실적” 다올 230만원·NH 220만원 목표가 제시삼성바이오로직스가 최근 미국 록빌 공장 인수를 마무리한 가운…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
     },
     {
       "tag": "macro",
       "tagLabel": "거시",
-      "title": "버핏 \"애플株 사고 싶지만 지금은 담을 타이밍 아냐\"",
-      "summary": "",
+      "title": "수은, 공급망안정화기금 첫 글로벌본드 5억달러 발행",
+      "summary": "기금 첫 외화 조달 성공…대외 불확실성에서 투자자 신뢰 확인한국수출입은행은 ‘공급망안정화기금’ 첫 외화채권(글로벌본드) 발행에 성공했다고 2일 …",
       "why": "",
-      "date": "2026.04.02"
+      "date": "2026.04.02",
+      "lang": "ko"
+    },
+    {
+      "tag": "energy",
+      "tagLabel": "에너지",
+      "title": "고유가에 지갑 닫히자…KB국민카드, 유류비·교통비 지원 나선다",
+      "summary": "주유카드 최대 리터당 150원 할인 K-패스 연계 교통비도 추가 지원 온누리상품권·추첨 이벤트까지 확대KB국민카드가 고유가 장기화로 커진 생활비…",
+      "why": "",
+      "date": "2026.04.02",
+      "lang": "ko"
     },
     {
       "tag": "market",
       "tagLabel": "시장",
-      "title": "코스피 강세인데…HD현대重 주가, 하루새 3% 하락",
-      "summary": "",
+      "title": "“돈 맡길 땐 2%인데 빌릴 땐 7%, 말이 돼?”…더 벌어진 예대금리차 이유는",
+      "summary": "5대 은행 예금 2.85~2.95% 주담대 상단은 이미 7% 돌파 “기업대출 금리경쟁 불붙어 예금금리 적극대응 어려워“주택담보대출 금리 상단이 …",
       "why": "",
-      "date": "2026.04.02"
-    },
-    {
-      "tag": "market",
-      "tagLabel": "시장",
-      "title": "실적 한숨 돌린 나이키, 주가는 '한숨'",
-      "summary": "",
-      "why": "",
-      "date": "2026.04.02"
-    },
-    {
-      "tag": "risk",
-      "tagLabel": "리스크",
-      "title": "\"중국인들이 안 사요\"…나이키, 하루 만에 9% 급락 '비명'",
-      "summary": "",
-      "why": "",
-      "date": "2026.04.02"
-    },
-    {
-      "tag": "macro",
-      "tagLabel": "거시",
-      "title": "중동 종전 기대감에 반도체株 동반 강세…삼전닉스 8%대 급등",
-      "summary": "",
-      "why": "",
-      "date": "2026.04.02"
+      "date": "2026.04.02",
+      "lang": "ko"
     }
   ]
 }
