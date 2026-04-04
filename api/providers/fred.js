@@ -17,11 +17,13 @@ export async function getFredData(apiKey) {
       return null;
     });
 
-  const [us10y, us2y, fedfunds] = await Promise.all([
+  const [us10y, us2y, fedfunds, mich1y, mich5y] = await Promise.all([
     get('DGS10'),
     get('DGS2'),
     get('FEDFUNDS'),
+    get('MICH'),
+    get('EXPINF5YR'),
   ]);
 
-  return { us10y, us2y, fedfunds };
+  return { us10y, us2y, fedfunds, mich1y, mich5y };
 }
