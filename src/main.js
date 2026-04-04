@@ -204,6 +204,83 @@ function showSkeleton(gridId, count) {
   ).join('');
 }
 
+// ────────── RISK SCORE ──────────
+function calcRiskScore() {
+  const vix      = parseFloat(MOCK_MARKET.find(m => m.label === 'VIX')?.value) || 0;
+  const spread   = parseFloat(MOCK_MARKET.find(m => m.label === '장단기금리차')?.value) || 0;
+  const fg       = parseFloat(MOCK_MARKET.find(m => m.label === '공포탐욕')?.value) || 50;
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const mich1y   = lastMeta?.mich1y || 0;
+
+  let score = 0;
+  // VIX 절댓값 (0~25)
+  score += vix < 15 ? 0 : vix < 20 ? 5 : vix < 25 ? 12 : vix < 30 ? 18 : 25;
+  // 장단기금리차 역전 (0~20)
+  score += spread > 0 ? 0 : spread > -0.25 ? 8 : spread > -0.5 ? 14 : 20;
+  // 침체 확률 (0~20)
+  score += Math.round(recession * 0.2);
+  // 공포탐욕 역산 (0~15)
+  score += Math.round((100 - fg) * 0.15);
+  // 미시건대 기대인플레 1Y (0~20)
+  score += mich1y > 4 ? 10 : mich1y > 3 ? 5 : 0;
+
+  return Math.min(Math.round(score), 100);
+}
+
+function renderRiskScore() {
+  const score = calcRiskScore();
+  const elVal   = document.getElementById('risk-score-value');
+  const elGrade = document.getElementById('risk-score-grade');
+  const elBar   = document.getElementById('risk-score-bar');
+  const elBreak = document.getElementById('risk-score-breakdown');
+  if (!elVal) return;
+
+  let grade, gradeClass;
+  if (score < 30)      { grade = '🟢 안정';  gradeClass = 'grade-safe'; }
+  else if (score < 55) { grade = '🟡 주의';  gradeClass = 'grade-caution'; }
+  else if (score < 75) { grade = '🟠 경고';  gradeClass = 'grade-warning'; }
+  else                 { grade = '🔴 위험';  gradeClass = 'grade-danger'; }
+
+  elVal.textContent = score;
+  elGrade.textContent = grade;
+  elGrade.className = `risk-score-grade ${gradeClass}`;
+
+  // 게이지바 (rAF로 transition 적용)
+  elBar.style.width = '0%';
+  elBar.className = `risk-score-bar-fill ${gradeClass}`;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { elBar.style.width = score + '%'; });
+  });
+
+  // 구성 요소별 점수 표
+  const vix      = parseFloat(MOCK_MARKET.find(m => m.label === 'VIX')?.value) || 0;
+  const spread   = parseFloat(MOCK_MARKET.find(m => m.label === '장단기금리차')?.value) || 0;
+  const fg       = parseFloat(MOCK_MARKET.find(m => m.label === '공포탐욕')?.value) || 50;
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const mich1y   = lastMeta?.mich1y || null;
+
+  const vixScore      = vix < 15 ? 0 : vix < 20 ? 5 : vix < 25 ? 12 : vix < 30 ? 18 : 25;
+  const spreadScore   = spread > 0 ? 0 : spread > -0.25 ? 8 : spread > -0.5 ? 14 : 20;
+  const recScore      = Math.round(recession * 0.2);
+  const fgScore       = Math.round((100 - fg) * 0.15);
+  const michScore     = mich1y !== null ? (mich1y > 4 ? 10 : mich1y > 3 ? 5 : 0) : null;
+
+  const rows = [
+    { label: 'VIX',          val: vix.toFixed(1),                     score: vixScore,    max: 25 },
+    { label: '장단기금리차', val: spread.toFixed(2) + '%',             score: spreadScore, max: 20 },
+    { label: '침체 확률',    val: recession + '%',                     score: recScore,    max: 20 },
+    { label: '공포탐욕',     val: fg.toFixed(0),                       score: fgScore,     max: 15 },
+    { label: '기대인플레',   val: mich1y !== null ? mich1y + '%' : '—', score: michScore,   max: 20 },
+  ];
+
+  elBreak.innerHTML = rows.map(r => `
+    <div class="risk-row">
+      <span class="risk-row-label">${escHtml(r.label)}</span>
+      <span class="risk-row-val">${escHtml(r.val)}</span>
+      <span class="risk-row-score">${r.score !== null ? r.score + '/' + r.max : '—'}</span>
+    </div>`).join('');
+}
+
 // ────────── INFO MODAL ──────────
 let _activeTrigger = null;
 let _infoModalInited = false;
@@ -622,6 +699,10 @@ async function simulateFetch(section) {
         status: 'fallback', updated_at: new Date().toISOString(),
         sources: [], providers: {}, errors: { fetch: 'api unavailable or invalid response' }
       };
+      if (apiData && lastMeta) {
+        lastMeta.mich1y = apiData.mich1y ?? null;
+        lastMeta.mich5y = apiData.mich5y ?? null;
+      }
     } catch (err) {
       console.error('API error:', err);
       lastMeta = {
@@ -737,6 +818,7 @@ async function reloadSection(section) {
     CACHE[section] = Date.now();
     if (section === 'market') {
       renderMarket();
+      renderRiskScore();
       initInfoModal();
     }
     if (section === 'prob') renderProb();
@@ -781,6 +863,7 @@ async function reloadAll() {
     CACHE.market = CACHE.prob = CACHE.news = now;
 
     renderMarket();
+    renderRiskScore();
     initInfoModal();
     renderProb();
     renderNews();
@@ -817,6 +900,7 @@ async function initApp() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  renderRiskScore();
   initInfoModal();
   renderProb();
   renderNews();
