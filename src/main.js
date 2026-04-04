@@ -783,7 +783,36 @@ async function simulateFetch(section) {
         }
       }
     }
-    if (section === 'news' || !section) MOCK_NEWS = data.news || [];
+    if (section === 'news' || !section) {
+      // /api/news에서 DeepSeek 자동 생성 뉴스 시도, 실패 시 seed.json fallback
+      try {
+        const vix       = MOCK_MARKET.find(m => m.label === 'VIX')?.value || '0';
+        const spread    = MOCK_MARKET.find(m => m.label === '장단기금리차')?.value || '0';
+        const sp500     = MOCK_MARKET.find(m => m.label === 'S&P 500');
+        const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+        const params = new URLSearchParams({
+          vix:        parseFloat(vix)    || 0,
+          spread:     parseFloat(spread) || 0,
+          recession,
+          mich1y:     lastMeta?.mich1y  || 0,
+          sp500Change: sp500?.raw       || 0,
+        });
+        const newsRes = await fetch(`/api/news?${params}`, { cache: 'no-store' });
+        if (newsRes.ok) {
+          const newsData = await newsRes.json();
+          if (Array.isArray(newsData.news) && newsData.news.length > 0) {
+            MOCK_NEWS = newsData.news;
+          } else {
+            MOCK_NEWS = data.news || [];
+          }
+        } else {
+          MOCK_NEWS = data.news || [];
+        }
+      } catch (newsErr) {
+        console.error('[news] api fetch failed, using seed fallback:', newsErr);
+        MOCK_NEWS = data.news || [];
+      }
+    }
     updateStatusBadge(lastMeta);
   } catch (e) {
     console.error('Data fetch error:', e);
