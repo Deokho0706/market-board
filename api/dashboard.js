@@ -99,7 +99,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold] = await Promise.all([
+    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq] = await Promise.all([
       getFredData(API_KEY),
       getPolymarketData(),
       getYahooData('^GSPC', true),
@@ -108,7 +108,9 @@ export default async function handler(req, res) {
       getYahooData('DX-Y.NYB', false),
       getYahooData('KRW=X', true),
       getYahooData('CL=F', false),
-      getYahooData('GC=F', true)
+      getYahooData('GC=F', true),
+      getYahooData('^KS11', true),
+      getYahooData('^KQ11', true)
     ]);
 
     // ── polymarket 정규화 (부분 응답 안전 처리) ──
@@ -135,7 +137,7 @@ export default async function handler(req, res) {
     else if (fredNullCount > 0) { providers.fred.status = 'partial'; errors.fred = `${fredNullCount}/3 series null`; }
 
     // Yahoo — sp500+nasdaq 둘 다 null이면 핵심 없음 → down
-    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold];
+    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq];
     const yahooFailCount = yahooAll.filter(v => v === null).length;
     if (yahooFailCount === yahooAll.length || (sp500 === null && nasdaq === null)) {
       providers.yahoo.status = 'down';    errors.yahoo = `${yahooFailCount}/${yahooAll.length} tickers null`;
@@ -161,7 +163,7 @@ export default async function handler(req, res) {
     const spread = (fred.us10y !== null && fred.us2y !== null) ? (fred.us10y - fred.us2y) : null;
 
     res.status(200).json({
-      market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
+      market: { sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq },
       us10y:    fred.us10y?.toFixed(2) ?? null,
       us2y:     fred.us2y?.toFixed(2)  ?? null,
       spread:   spread !== null ? spread.toFixed(2) : null,
