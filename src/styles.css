@@ -950,6 +950,17 @@
   .risk-row-val   { font-family: var(--mono); color: var(--text); }
   .risk-row-score { font-family: var(--mono); color: var(--muted); font-size: 11px; }
 
+  .risk-score-comment {
+    margin-top: 14px;
+    padding: 10px 14px;
+    background: rgba(0, 212, 170, 0.06);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
   @media (max-width: 600px) {
     .risk-score-inner { flex-direction: column; gap: 16px; }
     .risk-score-number { font-size: 36px; }

@@ -64,6 +64,45 @@ async function generateNews(indicators) {
   return JSON.parse(match[0]);
 }
 
+// ─── AI 해설 코멘트 ───
+// score: number, indicators: { vix, spread, recession, mich1y }
+export async function getRiskComment(score, indicators) {
+  const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
+  if (!DEEPSEEK_API_KEY) return null;
+
+  const { vix = 0, spread = 0, recession = 0, mich1y = 0 } = indicators;
+  const grade = score < 30 ? '안정' : score < 55 ? '주의' : score < 75 ? '경고' : '위험';
+
+  const prompt =
+    `현재 경제 위험도 점수는 ${score}점(${grade})입니다.\n` +
+    `주요 지표: VIX ${vix}, 장단기금리차 ${spread}%, 침체확률 ${recession}%, 기대인플레 ${mich1y}%.\n` +
+    `투자자를 위한 핵심 시사점을 한국어 1~2문장으로만 작성하세요. JSON 없이 텍스트만.`;
+
+  try {
+    const res = await withTimeout(
+      fetch('https://api.deepseek.com/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${DEEPSEEK_API_KEY}`,
+        },
+        body: JSON.stringify({
+          model: 'deepseek-chat',
+          messages: [{ role: 'user', content: prompt }],
+          temperature: 0.5,
+          max_tokens: 150,
+        }),
+      }),
+      8000
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.choices?.[0]?.message?.content?.trim() ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export default async function handler(req, res) {
   // CORS 허용 (같은 도메인)
   res.setHeader('Access-Control-Allow-Origin', '*');

@@ -279,6 +279,21 @@ function renderRiskScore() {
       <span class="risk-row-val">${escHtml(r.val)}</span>
       <span class="risk-row-score">${r.score !== null ? r.score + '/' + r.max : '—'}</span>
     </div>`).join('');
+
+  // AI 해설 코멘트 (있을 때만 표시)
+  const comment = lastMeta?.riskComment ?? null;
+  let commentEl = document.getElementById('risk-score-comment');
+  if (comment) {
+    if (!commentEl) {
+      commentEl = document.createElement('div');
+      commentEl.id = 'risk-score-comment';
+      commentEl.className = 'risk-score-comment';
+      document.getElementById('risk-score-section').appendChild(commentEl);
+    }
+    commentEl.textContent = comment;
+  } else if (commentEl) {
+    commentEl.remove();
+  }
 }
 
 // ────────── INFO MODAL ──────────
@@ -700,8 +715,9 @@ async function simulateFetch(section) {
         sources: [], providers: {}, errors: { fetch: 'api unavailable or invalid response' }
       };
       if (apiData && lastMeta) {
-        lastMeta.mich1y = apiData.mich1y ?? null;
-        lastMeta.mich5y = apiData.mich5y ?? null;
+        lastMeta.mich1y      = apiData.mich1y      ?? null;
+        lastMeta.mich5y      = apiData.mich5y      ?? null;
+        lastMeta.riskComment = apiData.riskComment ?? null;
       }
     } catch (err) {
       console.error('API error:', err);
