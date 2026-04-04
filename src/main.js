@@ -15,6 +15,7 @@ let MOCK_NEWS = [];
 let lastMeta = null;
 let lastMich1y = null;
 let lastMich5y = null;
+let lastRiskComment = null;
 
 // ────────── TOOLTIP & GROUP DATA ──────────
 const MARKET_TIPS = {
@@ -656,6 +657,42 @@ function renderRiskScore() {
       <span class="risk-row-score risk-row-${gradeClass}">${b.score}<span class="risk-row-max">/${b.max}</span></span>
     </div>`
   ).join('');
+
+  // AI 해설 코멘트
+  const commentEl = document.getElementById('risk-ai-comment');
+  if (commentEl) {
+    if (lastRiskComment) {
+      commentEl.textContent = lastRiskComment;
+      commentEl.style.display = '';
+    } else {
+      commentEl.style.display = 'none';
+    }
+  }
+}
+
+// ────────── DEEPSEEK NEWS ──────────
+async function fetchDeepSeekNews() {
+  const vix      = MOCK_MARKET.find(m => m.label === 'VIX')?.value || '';
+  const spread   = MOCK_MARKET.find(m => m.label === '장단기금리차')?.value?.replace('%', '') || '';
+  const fg       = MOCK_MARKET.find(m => m.label === '공포탐욕')?.value || '';
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const { total } = calcRiskScore();
+  const grade    = total < 30 ? '안정' : total < 55 ? '주의' : total < 75 ? '경고' : '위험';
+
+  const params = new URLSearchParams({
+    vix, spread, recession, fg,
+    mich1y: lastMich1y || '',
+    score: total, grade
+  });
+
+  try {
+    const res = await fetch(`/api/news?${params}`, { cache: 'no-store' });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (e) {
+    console.warn('[news] DeepSeek unavailable, using seed fallback');
+    return null;
+  }
 }
 
 // ────────── CACHE & RELOAD ──────────
@@ -762,7 +799,13 @@ async function simulateFetch(section) {
         }
       }
     }
-    if (section === 'news' || !section) MOCK_NEWS = data.news || [];
+    if (section === 'news' || !section) {
+      MOCK_NEWS = data.news || [];
+      // DeepSeek 뉴스 시도 (실패 시 seed 유지)
+      const deepseek = await fetchDeepSeekNews();
+      if (deepseek?.news?.length > 0) MOCK_NEWS = deepseek.news;
+      if (deepseek?.riskComment)      lastRiskComment = deepseek.riskComment;
+    }
     updateStatusBadge(lastMeta);
   } catch (e) {
     console.error('Data fetch error:', e);
