@@ -129,7 +129,7 @@ export default async function handler(req, res) {
     };
     const errors = {};
 
-    // FRED
+    // FRED (핵심 3개 시리즈 기준으로 상태 판정, mich1y/mich5y는 보조)
     const fredNullCount = [fred.us10y, fred.us2y, fred.fedfunds].filter(v => v === null).length;
     if (fredNullCount === 3)    { providers.fred.status = 'down';    errors.fred = 'all series null'; }
     else if (fredNullCount > 0) { providers.fred.status = 'partial'; errors.fred = `${fredNullCount}/3 series null`; }
@@ -166,6 +166,8 @@ export default async function handler(req, res) {
       us2y:     fred.us2y?.toFixed(2)  ?? null,
       spread:   spread !== null ? spread.toFixed(2) : null,
       fedfunds: fred.fedfunds?.toFixed(2) ?? null,
+      mich1y:   fred.mich1y?.toFixed(1) ?? null,
+      mich5y:   fred.mich5y?.toFixed(1) ?? null,
       polymarket: poly,
       _meta: {
         status:     overallStatus,

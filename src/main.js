@@ -13,6 +13,8 @@ let MOCK_MARKET = [];
 let MOCK_PROB = [];
 let MOCK_NEWS = [];
 let lastMeta = null;
+let lastMich1y = null;
+let lastMich5y = null;
 
 // ────────── TOOLTIP & GROUP DATA ──────────
 const MARKET_TIPS = {
@@ -600,6 +602,62 @@ function buildCharts() {
   drawVIX(30);
 }
 
+// ────────── RISK SCORE ──────────
+function calcRiskScore() {
+  const vix      = parseFloat(MOCK_MARKET.find(m => m.label === 'VIX')?.value) || 0;
+  const spread   = parseFloat(MOCK_MARKET.find(m => m.label === '장단기금리차')?.value) || 0;
+  const fg       = parseFloat(MOCK_MARKET.find(m => m.label === '공포탐욕')?.value) || 50;
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const mich1y   = parseFloat(lastMich1y) || 0;
+
+  const vixScore      = vix < 15 ? 0 : vix < 20 ? 5 : vix < 25 ? 12 : vix < 30 ? 18 : 25;
+  const spreadScore   = spread > 0 ? 0 : spread > -0.25 ? 8 : spread > -0.5 ? 14 : 20;
+  const recScore      = Math.round(recession * 0.2);
+  const fgScore       = Math.round((100 - fg) * 0.15);
+  const michScore     = mich1y > 4 ? 10 : mich1y > 3 ? 5 : 0;
+  const total         = Math.min(vixScore + spreadScore + recScore + fgScore + michScore, 100);
+
+  return {
+    total,
+    breakdown: [
+      { label: 'VIX',           score: vixScore,    max: 25, value: vix > 0 ? vix.toFixed(1) : '—' },
+      { label: '장단기금리차',  score: spreadScore, max: 20, value: spread !== 0 ? (spread > 0 ? '+' : '') + spread.toFixed(2) + '%' : '—' },
+      { label: '침체 확률',     score: recScore,    max: 20, value: recession > 0 ? recession + '%' : '—' },
+      { label: '공포탐욕',      score: fgScore,     max: 15, value: fg > 0 ? fg.toFixed(0) : '—' },
+      { label: '기대인플레(1Y)', score: michScore,   max: 20, value: mich1y > 0 ? mich1y.toFixed(1) + '%' : '—' },
+    ]
+  };
+}
+
+function renderRiskScore() {
+  const scoreEl     = document.getElementById('risk-score-value');
+  const gradeEl     = document.getElementById('risk-score-grade');
+  const barEl       = document.getElementById('risk-score-bar');
+  const breakdownEl = document.getElementById('risk-score-breakdown');
+  if (!scoreEl) return;
+
+  const { total, breakdown } = calcRiskScore();
+  const gradeClass = total < 30 ? 'safe' : total < 55 ? 'caution' : total < 75 ? 'warning' : 'danger';
+  const gradeText  = total < 30 ? '안정' : total < 55 ? '주의' : total < 75 ? '경고' : '위험';
+  const gradeDot   = total < 30 ? '🟢' : total < 55 ? '🟡' : total < 75 ? '🟠' : '🔴';
+
+  scoreEl.textContent = total;
+  scoreEl.className   = `risk-val-num risk-val-${gradeClass}`;
+  gradeEl.textContent = `${gradeDot} ${gradeText}`;
+  gradeEl.className   = `risk-grade risk-grade-${gradeClass}`;
+
+  barEl.style.width   = total + '%';
+  barEl.className     = `risk-bar-fill risk-bar-${gradeClass}`;
+
+  breakdownEl.innerHTML = breakdown.map(b =>
+    `<div class="risk-row">
+      <span class="risk-row-label">${escHtml(b.label)}</span>
+      <span class="risk-row-val">${escHtml(b.value)}</span>
+      <span class="risk-row-score risk-row-${gradeClass}">${b.score}<span class="risk-row-max">/${b.max}</span></span>
+    </div>`
+  ).join('');
+}
+
 // ────────── CACHE & RELOAD ──────────
 const CACHE = {};
 const CACHE_TTL = { market: 90000, prob: 900000, news: 1800000 }; // ms
@@ -622,6 +680,8 @@ async function simulateFetch(section) {
         status: 'fallback', updated_at: new Date().toISOString(),
         sources: [], providers: {}, errors: { fetch: 'api unavailable or invalid response' }
       };
+      lastMich1y = apiData?.mich1y ?? null;
+      lastMich5y = apiData?.mich5y ?? null;
     } catch (err) {
       console.error('API error:', err);
       lastMeta = {
@@ -738,8 +798,9 @@ async function reloadSection(section) {
     if (section === 'market') {
       renderMarket();
       initInfoModal();
+      renderRiskScore();
     }
-    if (section === 'prob') renderProb();
+    if (section === 'prob') { renderProb(); renderRiskScore(); }
     if (section === 'news') renderNews();
     setTs(`ts-${section}`, new Date(CACHE[section]), false);
   } finally {
@@ -785,6 +846,7 @@ async function reloadAll() {
     renderProb();
     renderNews();
     buildCharts();
+    renderRiskScore();
 
     const d = new Date(now);
     ['market', 'prob', 'news'].forEach(s => {
@@ -821,6 +883,7 @@ async function initApp() {
   renderProb();
   renderNews();
   buildCharts();
+  renderRiskScore();
 
   const d = new Date(now);
   ['market', 'prob', 'news'].forEach(s => {
