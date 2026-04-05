@@ -1005,7 +1005,7 @@ async function reloadAll() {
     initInfoModal();
     renderProb();
     renderNews();
-    buildCharts();
+    await buildCharts();
 
     const d = new Date(now);
     ['market', 'prob', 'news'].forEach(s => {
@@ -1014,9 +1014,9 @@ async function reloadAll() {
     setTs('ts-chart', d, false);
     document.getElementById('ts-val').textContent = fmtTs(d);
   } finally {
-    // API 실패 여부와 관계없이 반드시 스피너 해제
     btnAll.classList.remove('spinning', 'loading');
     ['market', 'prob', 'news'].forEach(s => setBtnState(`btn-${s}`, false));
+    setBtnState('btn-chart', false);
   }
 }
 
@@ -1038,7 +1038,7 @@ async function initApp() {
   initInfoModal();
   renderProb();
   renderNews();
-  buildCharts();
+  await buildCharts();
 
   const d = new Date(now);
   ['market', 'prob', 'news'].forEach(s => {
