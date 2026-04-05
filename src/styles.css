@@ -89,12 +89,29 @@
     letter-spacing: 0.08em;
   }
 
-  /* FIX: 라이브 도트를 amber(경고색)에서 muted 점으로 변경 — "수동 갱신 모드"인데 pulsing live 도트는 오해 유발 */
   .live-dot {
-    width: 6px;
-    height: 6px;
+    width: 7px;
+    height: 7px;
     border-radius: 50%;
     background: var(--muted);
+    transition: background 0.4s;
+  }
+  .live-dot.status-live {
+    background: var(--green);
+    animation: dot-pulse 2s infinite;
+  }
+  .live-dot.status-down {
+    background: var(--red);
+  }
+  .live-dot.status-partial {
+    background: var(--amber);
+  }
+  @keyframes dot-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.35; }
+  }
+  #live-status-text {
+    transition: color 0.4s;
   }
 
   .ts {

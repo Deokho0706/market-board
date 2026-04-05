@@ -1,5 +1,6 @@
 import { getFredData } from './providers/fred.js';
 import { getRiskComment } from './news.js';
+import { withTimeout } from './utils/errors.js';
 import yf from 'yahoo-finance2';
 const yahooFinance = new yf();
 if (yahooFinance.suppressNotices) {
@@ -77,6 +78,25 @@ export default async function handler(req, res) {
     }
   };
 
+  const getFearGreed = async () => {
+    try {
+      const res = await withTimeout(
+        fetch('https://production.dataviz.cnn.io/index/fearandgreed/graphdata', {
+          headers: { 'User-Agent': 'Mozilla/5.0' }
+        }),
+        5000
+      );
+      if (!res.ok) return null;
+      const data = await res.json();
+      const score = data?.fear_and_greed?.score;
+      if (score == null) return null;
+      return Math.round(parseFloat(score));
+    } catch (err) {
+      console.error('[dashboard] feargreed error:', err.message);
+      return null;
+    }
+  };
+
   const getYahooData = async (ticker, noDecimals = false) => {
     try {
       const quote = await yahooFinance.quote(ticker);
@@ -100,7 +120,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc] = await Promise.all([
+    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc, fearGreed] = await Promise.all([
       getFredData(API_KEY),
       getPolymarketData(),
       getYahooData('^GSPC', true),
@@ -113,6 +133,7 @@ export default async function handler(req, res) {
       getYahooData('^KS11', true),
       getYahooData('^KQ11', true),
       getYahooData('BTC-USD', true),
+      getFearGreed(),
     ]);
 
     // ── polymarket 정규화 (부분 응답 안전 처리) ──
@@ -179,12 +200,13 @@ export default async function handler(req, res) {
     const riskComment = await getRiskComment(riskScore, {
       vix: vixVal,
       spread: spreadVal,
-      recession: 0, // polymarket은 아직 로드 중일 수 있어 0으로 전달
+      recession: poly.recession.yes ?? 0,
       mich1y: fred.mich1y ?? 0,
     }).catch(() => null);
 
     res.status(200).json({
       market: { sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc },
+      fearGreed: fearGreed ?? null,
       us10y:    fred.us10y?.toFixed(2) ?? null,
       us2y:     fred.us2y?.toFixed(2)  ?? null,
       spread:   spread !== null ? spread.toFixed(2) : null,
