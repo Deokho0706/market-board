@@ -802,6 +802,7 @@ async function simulateFetch(section) {
           }
         };
         updateFredItem("미국 10Y", apiData.us10y);
+        updateFredItem("미국 2Y", apiData.us2y);
         updateFredItem("장단기금리차", apiData.spread);
         updateFredItem("연준 기준금리", apiData.fedfunds);
 
@@ -958,11 +959,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = 0;
 
   try {
-    await Promise.all([
-      simulateFetch('market'),
-      simulateFetch('prob'),
-      simulateFetch('news'),
-    ]);
+    await simulateFetch();
 
     const now = Date.now();
     CACHE.market = CACHE.prob = CACHE.news = now;
@@ -995,11 +992,7 @@ async function initApp() {
   });
   setBtnState('btn-chart', true);
 
-  await Promise.all([
-    simulateFetch('market'),
-    simulateFetch('prob'),
-    simulateFetch('news'),
-  ]);
+  await simulateFetch();
 
   const now = Date.now();
   CACHE.market = CACHE.prob = CACHE.news = now;
