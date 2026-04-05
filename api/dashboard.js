@@ -179,7 +179,7 @@ export default async function handler(req, res) {
     const riskComment = await getRiskComment(riskScore, {
       vix: vixVal,
       spread: spreadVal,
-      recession: 0, // polymarket은 아직 로드 중일 수 있어 0으로 전달
+      recession: poly.recession.yes ?? 0,
       mich1y: fred.mich1y ?? 0,
     }).catch(() => null);
 
