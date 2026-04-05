@@ -20,9 +20,9 @@
     <header>
       <div class="logo">MARKET<span>·</span>BOARD</div>
       <div class="header-meta">
-        <div class="live-badge">
-          <div class="live-dot"></div>
-          수동 갱신 모드
+        <div class="live-badge" id="live-badge">
+          <div class="live-dot" id="live-dot"></div>
+          <span id="live-status-text">연결 중…</span>
         </div>
         <div class="ts">마지막 갱신: <span id="ts-val">—</span></div>
         <button class="btn-reload" id="btn-all" onclick="reloadAll()">
