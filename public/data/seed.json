@@ -94,6 +94,13 @@
       "sub": "상단 기준"
     },
     {
+      "label": "비트코인",
+      "value": "$84,200",
+      "change": "-1.30%",
+      "raw": -1.30,
+      "sub": "BTC/USD · 위험선호 바로미터"
+    },
+    {
       "label": "공포탐욕",
       "value": "20",
       "change": "Extreme Fear",

@@ -100,7 +100,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq] = await Promise.all([
+    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc] = await Promise.all([
       getFredData(API_KEY),
       getPolymarketData(),
       getYahooData('^GSPC', true),
@@ -112,6 +112,7 @@ export default async function handler(req, res) {
       getYahooData('GC=F', true),
       getYahooData('^KS11', true),
       getYahooData('^KQ11', true),
+      getYahooData('BTC-USD', true),
     ]);
 
     // ── polymarket 정규화 (부분 응답 안전 처리) ──
@@ -139,7 +140,7 @@ export default async function handler(req, res) {
     // 기대인플레는 보조 지표 — null이어도 core status 영향 없음
 
     // Yahoo — sp500+nasdaq 둘 다 null이면 핵심 없음 → down
-    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq];
+    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc];
     const yahooFailCount = yahooAll.filter(v => v === null).length;
     if (yahooFailCount === yahooAll.length || (sp500 === null && nasdaq === null)) {
       providers.yahoo.status = 'down';    errors.yahoo = `${yahooFailCount}/${yahooAll.length} tickers null`;
@@ -183,7 +184,7 @@ export default async function handler(req, res) {
     }).catch(() => null);
 
     res.status(200).json({
-      market: { sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq },
+      market: { sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc },
       us10y:    fred.us10y?.toFixed(2) ?? null,
       us2y:     fred.us2y?.toFixed(2)  ?? null,
       spread:   spread !== null ? spread.toFixed(2) : null,

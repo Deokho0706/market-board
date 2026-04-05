@@ -108,6 +108,13 @@ const MARKET_TIPS = {
     implication: '금리 인하 기대가 커질수록 성장주 비중이 높은 코스닥의 반등 폭이 코스피보다 클 수 있습니다. 반대로 금리 상승 환경에서는 코스피보다 큰 낙폭이 나타나는 경향이 있습니다.',
     warn: '개별 종목 리스크가 크고 유동성이 낮은 종목이 많습니다. 지수 전체 흐름보다 섹터별 순환매 흐름을 함께 확인하는 것이 중요합니다.'
   },
+  '비트코인': {
+    def: '세계 최대 암호화폐 비트코인(BTC)의 달러 가격입니다. 위험선호(Risk-on) 심리의 바로미터로 활용되며, 글로벌 유동성과 투자자 심리에 민감하게 반응합니다.',
+    current: '2026년 기준, 비트코인은 $80,000~$90,000 구간에서 등락 중입니다. 미국 현물 ETF 승인 이후 기관 자금 유입이 꾸준히 이어지고 있으나, 거시 불확실성과 위험자산 전반의 조정 압력이 상방을 제한하고 있습니다.',
+    context: '$30,000 미만: 약세장 | $30,000~60,000: 보통 | $60,000~100,000: 강세 | $100,000 이상: 과열 경계. 2024년 3월 사상 최고치 $73,750, 2024년 ETF 승인 이후 기관 참여 급증.',
+    implication: '비트코인 급락은 종종 위험자산 전반의 투심 악화를 선행하는 신호가 되기도 합니다. 반대로 BTC 강세는 Risk-on 환경과 유동성 개선을 암시할 수 있습니다.',
+    warn: '변동성이 주식보다 훨씬 크고 규제 이슈에 민감합니다. 포트폴리오 내 비중을 제한하고 단독 지표로 사용하지 마세요.'
+  },
   '공포탐욕': {
     def: 'CNN이 산출하는 시장 심리 지수입니다(0~100). 주가 모멘텀, 시장 강도, 거래 범위, 풀투콜 비율, 정크채 스프레드, VIX, 안전자산 수요 등 7개 지표를 종합합니다.',
     current: '2026년 3월 기준, 공포탐욕 지수는 20~30 구간의 공포(Fear) 단계에 위치합니다. VIX 급등, 풋옵션 수요 증가, 안전자산(금·국채) 선호 강화가 지수를 끌어내리고 있습니다. 이란 전쟁 리스크와 트럼프 관세 불확실성이 해소되지 않는 한 공포 구간이 지속될 가능성이 높습니다.',
@@ -123,7 +130,7 @@ const MARKET_GROUP_ORDER = [
   { label: '달러·환율',   items: ['달러인덱스', '달러/원'] },
   { label: '금리',        items: ['미국 10Y', '미국 2Y', '장단기금리차', '연준 기준금리'] },
   { label: '원자재·실물', items: ['WTI 원유', '금'] },
-  { label: '심리·보조',   items: ['공포탐욕'] },
+  { label: '심리·보조',   items: ['공포탐욕', '비트코인'] },
 ];
 
 // ────────── CHART DATA ──────────
@@ -294,6 +301,41 @@ function renderRiskScore() {
       <span class="risk-row-val">${escHtml(r.val)}</span>
       <span class="risk-row-score">${r.score !== null ? r.score + '/' + r.max : '—'}</span>
     </div>`).join('');
+
+  // 금/금리 상관 신호 (gold raw + us10y raw 방향으로 판단)
+  const goldItem  = MOCK_MARKET.find(m => m.label === '금');
+  const us10yItem = MOCK_MARKET.find(m => m.label === '미국 10Y');
+  const goldRaw   = goldItem?.raw ?? 0;    // 당일 % 변화
+  const us10yRaw  = us10yItem?.raw ?? 0;   // 당일 bp 변화
+
+  let signalEl = document.getElementById('risk-gold-signal');
+  const hasSignal = goldItem && us10yItem;
+  if (hasSignal) {
+    if (!signalEl) {
+      signalEl = document.createElement('div');
+      signalEl.id = 'risk-gold-signal';
+      signalEl.className = 'risk-gold-signal';
+      document.getElementById('risk-score-section').appendChild(signalEl);
+    }
+    let signalText, signalClass;
+    if (goldRaw > 0 && us10yRaw > 0) {
+      signalText = '⚠ 금↑ + 장기금리↑ — 인플레 공포 신호. 연준 인하 기대 약화 가능성.';
+      signalClass = 'signal-warn';
+    } else if (goldRaw > 0 && us10yRaw < 0) {
+      signalText = '🛡 금↑ + 장기금리↓ — 안전자산 헤지 수요. 경기 둔화 우려 반영.';
+      signalClass = 'signal-hedge';
+    } else if (goldRaw < 0 && us10yRaw > 0) {
+      signalText = '📈 금↓ + 장기금리↑ — 달러 강세·위험선호 회복 가능성.';
+      signalClass = 'signal-risk-on';
+    } else {
+      signalText = '— 금/금리 방향 중립. 유의미한 상관 신호 없음.';
+      signalClass = 'signal-neutral';
+    }
+    signalEl.textContent = signalText;
+    signalEl.className = `risk-gold-signal ${signalClass}`;
+  } else if (signalEl) {
+    signalEl.remove();
+  }
 
   // AI 해설 코멘트 (있을 때만 표시)
   const comment = lastMeta?.riskComment ?? null;
@@ -783,6 +825,7 @@ async function simulateFetch(section) {
           updateYahooItem("금", apiData.market.gold);
           updateYahooItem("코스피", apiData.market.kospi);
           updateYahooItem("코스닥", apiData.market.kosdaq);
+          updateYahooItem("비트코인", apiData.market.btc);
         }
       }
     }
