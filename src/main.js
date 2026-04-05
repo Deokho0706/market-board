@@ -828,6 +828,16 @@ async function simulateFetch(section) {
           updateYahooItem("코스닥", apiData.market.kosdaq);
           updateYahooItem("비트코인", apiData.market.btc);
         }
+
+        // 공포탐욕 실시간 반영 (CNN Fear & Greed)
+        if (apiData.fearGreed !== null && apiData.fearGreed !== undefined) {
+          const fg = apiData.fearGreed;
+          const fgLabel = fg <= 25 ? '극단 공포' : fg <= 45 ? '공포' : fg <= 55 ? '중립' : fg <= 75 ? '탐욕' : '극단 탐욕';
+          const idx = MOCK_MARKET.findIndex(m => m.label === '공포탐욕');
+          const fgItem = { label: '공포탐욕', value: String(fg), change: '', raw: fg - 50, sub: `CNN · ${fgLabel}` };
+          if (idx > -1) MOCK_MARKET[idx] = fgItem;
+          else MOCK_MARKET.push(fgItem);
+        }
       }
     }
     if (section === 'prob' || !section) {
