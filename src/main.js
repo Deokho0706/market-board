@@ -94,6 +94,27 @@ const MARKET_TIPS = {
     implication: '높은 기준금리는 기업 차입 비용 증가, 소비 위축, 부동산 시장 압박으로 이어집니다. 인하 시작 시 주식과 채권의 동반 상승 가능성이 있습니다.',
     warn: '시장은 현재 금리보다 향후 금리 경로 기대에 더 민감하게 반응합니다. CME FedWatch의 확률 변화를 주시하는 것이 중요합니다.'
   },
+  '코스피': {
+    def: '한국거래소(KRX)에 상장된 대형 주식들로 구성된 한국 대표 주가지수입니다. 삼성전자, SK하이닉스 등 대형 수출기업의 비중이 높아 반도체·전자산업 동향과 글로벌 경기에 민감하게 반응합니다.',
+    current: '2026년 기준, 코스피는 2,500~2,600선 부근에서 등락 중입니다. 원화 약세(달러/원 1,500원 상회), 반도체 수출 회복 여부, 외국인 자금 이탈 여부가 방향성을 좌우하고 있습니다.',
+    context: '2,000 미만: 약세장 | 2,000~2,500: 보통 | 2,500~3,000: 강세 | 3,000 이상: 고평가 경계. 2021년 7월 장중 3,316의 사상 최고치를 기록한 바 있습니다.',
+    implication: '코스피 하락은 수출주 중심의 이익 감소나 외국인 매도 심화를 의미할 수 있습니다. 반도체 업황 회복과 원화 강세가 동반될 때 강한 반등이 나타나는 경향이 있습니다.',
+    warn: '코스피는 글로벌 증시와 높은 상관관계를 보입니다. 미국 증시, 환율, 외국인 수급을 함께 확인하는 것이 중요합니다.'
+  },
+  '코스닥': {
+    def: '한국거래소에 상장된 중소·기술·바이오 기업들로 구성된 주가지수입니다. 코스피 대비 성장주 비중이 높아 금리와 투자심리 변화에 더 민감하게 반응합니다.',
+    current: '2026년 기준, 코스닥은 700~750선에서 등락 중입니다. 바이오·2차전지 섹터의 실적 가이던스와 금리 환경이 지수 방향성에 큰 영향을 미치고 있습니다.',
+    context: '500 미만: 약세 | 500~800: 보통 | 800~1,000: 강세 | 1,000 이상: 고평가 경계. 2021년 8월 장중 1,047의 사상 최고치를 기록한 바 있습니다.',
+    implication: '금리 인하 기대가 커질수록 성장주 비중이 높은 코스닥의 반등 폭이 코스피보다 클 수 있습니다. 반대로 금리 상승 환경에서는 코스피보다 큰 낙폭이 나타나는 경향이 있습니다.',
+    warn: '개별 종목 리스크가 크고 유동성이 낮은 종목이 많습니다. 지수 전체 흐름보다 섹터별 순환매 흐름을 함께 확인하는 것이 중요합니다.'
+  },
+  '비트코인': {
+    def: '세계 최대 암호화폐 비트코인(BTC)의 달러 가격입니다. 위험선호(Risk-on) 심리의 바로미터로 활용되며, 글로벌 유동성과 투자자 심리에 민감하게 반응합니다.',
+    current: '2026년 기준, 비트코인은 $80,000~$90,000 구간에서 등락 중입니다. 미국 현물 ETF 승인 이후 기관 자금 유입이 꾸준히 이어지고 있으나, 거시 불확실성과 위험자산 전반의 조정 압력이 상방을 제한하고 있습니다.',
+    context: '$30,000 미만: 약세장 | $30,000~60,000: 보통 | $60,000~100,000: 강세 | $100,000 이상: 과열 경계. 2024년 3월 사상 최고치 $73,750, 2024년 ETF 승인 이후 기관 참여 급증.',
+    implication: '비트코인 급락은 종종 위험자산 전반의 투심 악화를 선행하는 신호가 되기도 합니다. 반대로 BTC 강세는 Risk-on 환경과 유동성 개선을 암시할 수 있습니다.',
+    warn: '변동성이 주식보다 훨씬 크고 규제 이슈에 민감합니다. 포트폴리오 내 비중을 제한하고 단독 지표로 사용하지 마세요.'
+  },
   '공포탐욕': {
     def: 'CNN이 산출하는 시장 심리 지수입니다(0~100). 주가 모멘텀, 시장 강도, 거래 범위, 풀투콜 비율, 정크채 스프레드, VIX, 안전자산 수요 등 7개 지표를 종합합니다.',
     current: '2026년 3월 기준, 공포탐욕 지수는 20~30 구간의 공포(Fear) 단계에 위치합니다. VIX 급등, 풋옵션 수요 증가, 안전자산(금·국채) 선호 강화가 지수를 끌어내리고 있습니다. 이란 전쟁 리스크와 트럼프 관세 불확실성이 해소되지 않는 한 공포 구간이 지속될 가능성이 높습니다.',
@@ -105,10 +126,11 @@ const MARKET_TIPS = {
 
 const MARKET_GROUP_ORDER = [
   { label: '핵심 시장',   items: ['S&P 500', 'NASDAQ', 'VIX'] },
+  { label: '한국 증시',   items: ['코스피', '코스닥'] },
   { label: '달러·환율',   items: ['달러인덱스', '달러/원'] },
   { label: '금리',        items: ['미국 10Y', '미국 2Y', '장단기금리차', '연준 기준금리'] },
   { label: '원자재·실물', items: ['WTI 원유', '금'] },
-  { label: '심리·보조',   items: ['공포탐욕'] },
+  { label: '심리·보조',   items: ['공포탐욕', '비트코인'] },
 ];
 
 // ────────── CHART DATA ──────────
@@ -202,6 +224,133 @@ function showSkeleton(gridId, count) {
   g.innerHTML = Array.from({ length: count }, () =>
     `<div class="skeleton"></div>`
   ).join('');
+}
+
+// ────────── RISK SCORE ──────────
+function calcRiskScore() {
+  const vix      = parseFloat(MOCK_MARKET.find(m => m.label === 'VIX')?.value) || 0;
+  const spread   = parseFloat(MOCK_MARKET.find(m => m.label === '장단기금리차')?.value) || 0;
+  const fg       = parseFloat(MOCK_MARKET.find(m => m.label === '공포탐욕')?.value) || 50;
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const mich1y   = lastMeta?.mich1y || 0;
+
+  let score = 0;
+  // VIX 절댓값 (0~25)
+  score += vix < 15 ? 0 : vix < 20 ? 5 : vix < 25 ? 12 : vix < 30 ? 18 : 25;
+  // 장단기금리차 역전 (0~20)
+  score += spread > 0 ? 0 : spread > -0.25 ? 8 : spread > -0.5 ? 14 : 20;
+  // 침체 확률 (0~20)
+  score += Math.round(recession * 0.2);
+  // 공포탐욕 역산 (0~15)
+  score += Math.round((100 - fg) * 0.15);
+  // 미시건대 기대인플레 1Y (0~20)
+  score += mich1y > 4 ? 10 : mich1y > 3 ? 5 : 0;
+
+  return Math.min(Math.round(score), 100);
+}
+
+function renderRiskScore() {
+  const score = calcRiskScore();
+  const elVal   = document.getElementById('risk-score-value');
+  const elGrade = document.getElementById('risk-score-grade');
+  const elBar   = document.getElementById('risk-score-bar');
+  const elBreak = document.getElementById('risk-score-breakdown');
+  if (!elVal) return;
+
+  let grade, gradeClass;
+  if (score < 30)      { grade = '🟢 안정';  gradeClass = 'grade-safe'; }
+  else if (score < 55) { grade = '🟡 주의';  gradeClass = 'grade-caution'; }
+  else if (score < 75) { grade = '🟠 경고';  gradeClass = 'grade-warning'; }
+  else                 { grade = '🔴 위험';  gradeClass = 'grade-danger'; }
+
+  elVal.textContent = score;
+  elGrade.textContent = grade;
+  elGrade.className = `risk-score-grade ${gradeClass}`;
+
+  // 게이지바 (rAF로 transition 적용)
+  elBar.style.width = '0%';
+  elBar.className = `risk-score-bar-fill ${gradeClass}`;
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => { elBar.style.width = score + '%'; });
+  });
+
+  // 구성 요소별 점수 표
+  const vix      = parseFloat(MOCK_MARKET.find(m => m.label === 'VIX')?.value) || 0;
+  const spread   = parseFloat(MOCK_MARKET.find(m => m.label === '장단기금리차')?.value) || 0;
+  const fg       = parseFloat(MOCK_MARKET.find(m => m.label === '공포탐욕')?.value) || 50;
+  const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+  const mich1y   = lastMeta?.mich1y || null;
+
+  const vixScore      = vix < 15 ? 0 : vix < 20 ? 5 : vix < 25 ? 12 : vix < 30 ? 18 : 25;
+  const spreadScore   = spread > 0 ? 0 : spread > -0.25 ? 8 : spread > -0.5 ? 14 : 20;
+  const recScore      = Math.round(recession * 0.2);
+  const fgScore       = Math.round((100 - fg) * 0.15);
+  const michScore     = mich1y !== null ? (mich1y > 4 ? 10 : mich1y > 3 ? 5 : 0) : null;
+
+  const rows = [
+    { label: 'VIX',          val: vix.toFixed(1),                     score: vixScore,    max: 25 },
+    { label: '장단기금리차', val: spread.toFixed(2) + '%',             score: spreadScore, max: 20 },
+    { label: '침체 확률',    val: recession + '%',                     score: recScore,    max: 20 },
+    { label: '공포탐욕',     val: fg.toFixed(0),                       score: fgScore,     max: 15 },
+    { label: '기대인플레',   val: mich1y !== null ? mich1y + '%' : '—', score: michScore,   max: 20 },
+  ];
+
+  elBreak.innerHTML = rows.map(r => `
+    <div class="risk-row">
+      <span class="risk-row-label">${escHtml(r.label)}</span>
+      <span class="risk-row-val">${escHtml(r.val)}</span>
+      <span class="risk-row-score">${r.score !== null ? r.score + '/' + r.max : '—'}</span>
+    </div>`).join('');
+
+  // 금/금리 상관 신호 (gold raw + us10y raw 방향으로 판단)
+  const goldItem  = MOCK_MARKET.find(m => m.label === '금');
+  const us10yItem = MOCK_MARKET.find(m => m.label === '미국 10Y');
+  const goldRaw   = goldItem?.raw ?? 0;    // 당일 % 변화
+  const us10yRaw  = us10yItem?.raw ?? 0;   // 당일 bp 변화
+
+  let signalEl = document.getElementById('risk-gold-signal');
+  const hasSignal = goldItem && us10yItem;
+  if (hasSignal) {
+    if (!signalEl) {
+      signalEl = document.createElement('div');
+      signalEl.id = 'risk-gold-signal';
+      signalEl.className = 'risk-gold-signal';
+      document.getElementById('risk-score-section').appendChild(signalEl);
+    }
+    let signalText, signalClass;
+    if (goldRaw > 0 && us10yRaw > 0) {
+      signalText = '⚠ 금↑ + 장기금리↑ — 인플레 공포 신호. 연준 인하 기대 약화 가능성.';
+      signalClass = 'signal-warn';
+    } else if (goldRaw > 0 && us10yRaw < 0) {
+      signalText = '🛡 금↑ + 장기금리↓ — 안전자산 헤지 수요. 경기 둔화 우려 반영.';
+      signalClass = 'signal-hedge';
+    } else if (goldRaw < 0 && us10yRaw > 0) {
+      signalText = '📈 금↓ + 장기금리↑ — 달러 강세·위험선호 회복 가능성.';
+      signalClass = 'signal-risk-on';
+    } else {
+      signalText = '— 금/금리 방향 중립. 유의미한 상관 신호 없음.';
+      signalClass = 'signal-neutral';
+    }
+    signalEl.textContent = signalText;
+    signalEl.className = `risk-gold-signal ${signalClass}`;
+  } else if (signalEl) {
+    signalEl.remove();
+  }
+
+  // AI 해설 코멘트 (있을 때만 표시)
+  const comment = lastMeta?.riskComment ?? null;
+  let commentEl = document.getElementById('risk-score-comment');
+  if (comment) {
+    if (!commentEl) {
+      commentEl = document.createElement('div');
+      commentEl.id = 'risk-score-comment';
+      commentEl.className = 'risk-score-comment';
+      document.getElementById('risk-score-section').appendChild(commentEl);
+    }
+    commentEl.textContent = comment;
+  } else if (commentEl) {
+    commentEl.remove();
+  }
 }
 
 // ────────── INFO MODAL ──────────
@@ -622,6 +771,11 @@ async function simulateFetch(section) {
         status: 'fallback', updated_at: new Date().toISOString(),
         sources: [], providers: {}, errors: { fetch: 'api unavailable or invalid response' }
       };
+      if (apiData && lastMeta) {
+        lastMeta.mich1y      = apiData.mich1y      ?? null;
+        lastMeta.mich5y      = apiData.mich5y      ?? null;
+        lastMeta.riskComment = apiData.riskComment ?? null;
+      }
     } catch (err) {
       console.error('API error:', err);
       lastMeta = {
@@ -669,6 +823,9 @@ async function simulateFetch(section) {
           updateYahooItem("달러/원", apiData.market.krw);
           updateYahooItem("WTI 원유", apiData.market.wti);
           updateYahooItem("금", apiData.market.gold);
+          updateYahooItem("코스피", apiData.market.kospi);
+          updateYahooItem("코스닥", apiData.market.kosdaq);
+          updateYahooItem("비트코인", apiData.market.btc);
         }
       }
     }
@@ -702,7 +859,36 @@ async function simulateFetch(section) {
         }
       }
     }
-    if (section === 'news' || !section) MOCK_NEWS = data.news || [];
+    if (section === 'news' || !section) {
+      // /api/news에서 DeepSeek 자동 생성 뉴스 시도, 실패 시 seed.json fallback
+      try {
+        const vix       = MOCK_MARKET.find(m => m.label === 'VIX')?.value || '0';
+        const spread    = MOCK_MARKET.find(m => m.label === '장단기금리차')?.value || '0';
+        const sp500     = MOCK_MARKET.find(m => m.label === 'S&P 500');
+        const recession = MOCK_PROB.find(p => p.title?.includes('경기침체'))?.yes || 0;
+        const params = new URLSearchParams({
+          vix:        parseFloat(vix)    || 0,
+          spread:     parseFloat(spread) || 0,
+          recession,
+          mich1y:     lastMeta?.mich1y  || 0,
+          sp500Change: sp500?.raw       || 0,
+        });
+        const newsRes = await fetch(`/api/news?${params}`, { cache: 'no-store' });
+        if (newsRes.ok) {
+          const newsData = await newsRes.json();
+          if (Array.isArray(newsData.news) && newsData.news.length > 0) {
+            MOCK_NEWS = newsData.news;
+          } else {
+            MOCK_NEWS = data.news || [];
+          }
+        } else {
+          MOCK_NEWS = data.news || [];
+        }
+      } catch (newsErr) {
+        console.error('[news] api fetch failed, using seed fallback:', newsErr);
+        MOCK_NEWS = data.news || [];
+      }
+    }
     updateStatusBadge(lastMeta);
   } catch (e) {
     console.error('Data fetch error:', e);
@@ -737,6 +923,7 @@ async function reloadSection(section) {
     CACHE[section] = Date.now();
     if (section === 'market') {
       renderMarket();
+      renderRiskScore();
       initInfoModal();
     }
     if (section === 'prob') renderProb();
@@ -781,6 +968,7 @@ async function reloadAll() {
     CACHE.market = CACHE.prob = CACHE.news = now;
 
     renderMarket();
+    renderRiskScore();
     initInfoModal();
     renderProb();
     renderNews();
@@ -817,6 +1005,7 @@ async function initApp() {
   CACHE.market = CACHE.prob = CACHE.news = now;
 
   renderMarket();
+  renderRiskScore();
   initInfoModal();
   renderProb();
   renderNews();

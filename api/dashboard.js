@@ -1,4 +1,5 @@
 import { getFredData } from './providers/fred.js';
+import { getRiskComment } from './news.js';
 import yf from 'yahoo-finance2';
 const yahooFinance = new yf();
 if (yahooFinance.suppressNotices) {
@@ -99,7 +100,7 @@ export default async function handler(req, res) {
   };
 
   try {
-    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold] = await Promise.all([
+    const [fred, polymarket, sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc] = await Promise.all([
       getFredData(API_KEY),
       getPolymarketData(),
       getYahooData('^GSPC', true),
@@ -108,7 +109,10 @@ export default async function handler(req, res) {
       getYahooData('DX-Y.NYB', false),
       getYahooData('KRW=X', true),
       getYahooData('CL=F', false),
-      getYahooData('GC=F', true)
+      getYahooData('GC=F', true),
+      getYahooData('^KS11', true),
+      getYahooData('^KQ11', true),
+      getYahooData('BTC-USD', true),
     ]);
 
     // ── polymarket 정규화 (부분 응답 안전 처리) ──
@@ -133,9 +137,10 @@ export default async function handler(req, res) {
     const fredNullCount = [fred.us10y, fred.us2y, fred.fedfunds].filter(v => v === null).length;
     if (fredNullCount === 3)    { providers.fred.status = 'down';    errors.fred = 'all series null'; }
     else if (fredNullCount > 0) { providers.fred.status = 'partial'; errors.fred = `${fredNullCount}/3 series null`; }
+    // 기대인플레는 보조 지표 — null이어도 core status 영향 없음
 
     // Yahoo — sp500+nasdaq 둘 다 null이면 핵심 없음 → down
-    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold];
+    const yahooAll = [sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc];
     const yahooFailCount = yahooAll.filter(v => v === null).length;
     if (yahooFailCount === yahooAll.length || (sp500 === null && nasdaq === null)) {
       providers.yahoo.status = 'down';    errors.yahoo = `${yahooFailCount}/${yahooAll.length} tickers null`;
@@ -160,12 +165,33 @@ export default async function handler(req, res) {
 
     const spread = (fred.us10y !== null && fred.us2y !== null) ? (fred.us10y - fred.us2y) : null;
 
+    // 위험도 점수 서버 측 계산 (AI 해설용 — 프론트와 동일 공식)
+    const vixVal     = vix?.raw ?? 0;
+    const spreadVal  = spread ?? 0;
+    const riskScore  = Math.min(
+      (vixVal < 15 ? 0 : vixVal < 20 ? 5 : vixVal < 25 ? 12 : vixVal < 30 ? 18 : 25) +
+      (spreadVal > 0 ? 0 : spreadVal > -0.25 ? 8 : spreadVal > -0.5 ? 14 : 20) +
+      Math.round((fred.mich1y ?? 0) > 4 ? 10 : (fred.mich1y ?? 0) > 3 ? 5 : 0),
+      100
+    );
+
+    // DeepSeek AI 해설 (실패해도 응답 차단 안 함)
+    const riskComment = await getRiskComment(riskScore, {
+      vix: vixVal,
+      spread: spreadVal,
+      recession: 0, // polymarket은 아직 로드 중일 수 있어 0으로 전달
+      mich1y: fred.mich1y ?? 0,
+    }).catch(() => null);
+
     res.status(200).json({
-      market: { sp500, nasdaq, vix, dxy, krw, wti, gold },
+      market: { sp500, nasdaq, vix, dxy, krw, wti, gold, kospi, kosdaq, btc },
       us10y:    fred.us10y?.toFixed(2) ?? null,
       us2y:     fred.us2y?.toFixed(2)  ?? null,
       spread:   spread !== null ? spread.toFixed(2) : null,
       fedfunds: fred.fedfunds?.toFixed(2) ?? null,
+      mich1y:      fred.mich1y ?? null,
+      mich5y:      fred.mich5y ?? null,
+      riskComment: riskComment ?? null,
       polymarket: poly,
       _meta: {
         status:     overallStatus,

@@ -858,6 +858,126 @@
     margin-top: 0;
   }
 
+  /* ── RISK SCORE SECTION ── */
+  #risk-score-section {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin: 20px 0 8px;
+  }
+
+  .risk-score-inner {
+    display: flex;
+    gap: 32px;
+    align-items: flex-start;
+  }
+
+  .risk-score-left {
+    min-width: 120px;
+    flex-shrink: 0;
+  }
+
+  .risk-score-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .risk-score-number {
+    font-family: var(--mono);
+    font-size: 44px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .risk-score-grade {
+    font-size: 13px;
+    font-weight: 500;
+  }
+
+  .risk-score-grade.grade-safe    { color: var(--green); }
+  .risk-score-grade.grade-caution { color: var(--amber); }
+  .risk-score-grade.grade-warning { color: #fb923c; }
+  .risk-score-grade.grade-danger  { color: var(--red); }
+
+  .risk-score-right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 6px;
+  }
+
+  .risk-score-bar-track {
+    height: 6px;
+    background: var(--border2);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .risk-score-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .risk-score-bar-fill.grade-safe    { background: var(--green); }
+  .risk-score-bar-fill.grade-caution { background: var(--amber); }
+  .risk-score-bar-fill.grade-warning { background: #fb923c; }
+  .risk-score-bar-fill.grade-danger  { background: var(--red); }
+
+  .risk-score-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .risk-row {
+    display: grid;
+    grid-template-columns: 90px 60px auto;
+    align-items: center;
+    font-size: 12px;
+    gap: 8px;
+  }
+
+  .risk-row-label { color: var(--muted); }
+  .risk-row-val   { font-family: var(--mono); color: var(--text); }
+  .risk-row-score { font-family: var(--mono); color: var(--muted); font-size: 11px; }
+
+  .risk-gold-signal {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+  .risk-gold-signal.signal-warn     { background: rgba(244, 63, 94, 0.08); color: var(--red); }
+  .risk-gold-signal.signal-hedge    { background: rgba(59, 130, 246, 0.08); color: var(--blue); }
+  .risk-gold-signal.signal-risk-on  { background: rgba(34, 197, 94, 0.08); color: var(--green); }
+  .risk-gold-signal.signal-neutral  { background: var(--border); color: var(--muted); }
+
+  .risk-score-comment {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: rgba(0, 212, 170, 0.06);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  @media (max-width: 600px) {
+    .risk-score-inner { flex-direction: column; gap: 16px; }
+    .risk-score-number { font-size: 36px; }
+  }
+
   /* ── STATUS BADGE COLORS ── */
   #data-status-badge[data-status="live"]     { color: var(--green); }
   #data-status-badge[data-status="partial"]  { color: var(--amber); }
