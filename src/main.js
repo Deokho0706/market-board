@@ -467,16 +467,27 @@ function initInfoModal() {
 
 // ────────── STATUS BADGE ──────────
 function updateStatusBadge(meta) {
-  const el = document.getElementById('data-status-badge');
-  if (!el) return;
-  if (!meta) { el.textContent = ''; return; }
+  const el   = document.getElementById('data-status-badge');
+  const dot  = document.getElementById('live-dot');
+  const text = document.getElementById('live-status-text');
+
+  if (!meta) {
+    if (el)   { el.textContent = ''; }
+    if (dot)  { dot.className = 'live-dot'; }
+    if (text) { text.textContent = '연결 중…'; text.style.color = ''; }
+    return;
+  }
+
   const map = {
-    live:     'LIVE — 실시간 데이터 (FRED · Yahoo Finance · Polymarket)',
-    partial:  'PARTIAL — 일부 데이터는 지연 또는 대체값일 수 있습니다',
-    fallback: 'FALLBACK — 외부 API 응답 지연, 예비 데이터 표시 중'
+    live:     { badge: 'LIVE — 실시간 데이터 (FRED · Yahoo Finance · Polymarket)', label: 'LIVE', color: 'var(--green)' },
+    partial:  { badge: 'PARTIAL — 일부 데이터는 지연 또는 대체값일 수 있습니다',   label: 'PARTIAL', color: 'var(--amber)' },
+    fallback: { badge: 'FALLBACK — 외부 API 응답 지연, 예비 데이터 표시 중',       label: 'OFFLINE', color: 'var(--red)' },
   };
-  el.textContent = map[meta.status] ?? '';
-  el.dataset.status = meta.status ?? '';
+  const entry = map[meta.status] ?? { badge: '', label: '—', color: '' };
+
+  if (el)   { el.textContent = entry.badge; el.dataset.status = meta.status ?? ''; }
+  if (dot)  { dot.className = `live-dot status-${meta.status}`; }
+  if (text) { text.textContent = entry.label; text.style.color = entry.color; }
 }
 
 // ────────── RENDER ──────────
@@ -654,13 +665,26 @@ function chartOpts() {
   };
 }
 
-function drawSP(days) {
-  const { labels, data } = genSP500(days);
+async function fetchChartData(ticker, days) {
+  try {
+    const res = await fetch(`/api/chart?ticker=${encodeURIComponent(ticker)}&days=${days}`, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.error(`[chart] fetch failed (${ticker}):`, err.message);
+    return null;
+  }
+}
+
+async function drawSP(days) {
   const canvas = document.getElementById('chart-sp');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
-  // FIX: destroy 먼저, 그 다음 새 차트 생성
   if (charts.sp) { charts.sp.destroy(); charts.sp = null; }
+
+  const remote = await fetchChartData('^GSPC', days);
+  const { labels, data } = remote ?? genSP500(days); // fallback: 시뮬레이션
+
   const grad = ctx.createLinearGradient(0, 0, 0, 180);
   grad.addColorStop(0, 'rgba(0,212,170,0.18)');
   grad.addColorStop(1, 'rgba(0,212,170,0)');
@@ -677,12 +701,15 @@ function drawSP(days) {
   });
 }
 
-function drawVIX(days) {
-  const { labels, data } = genVIX(days);
+async function drawVIX(days) {
   const canvas = document.getElementById('chart-vix');
   if (!canvas) return;
   const ctx = canvas.getContext('2d');
   if (charts.vix) { charts.vix.destroy(); charts.vix = null; }
+
+  const remote = await fetchChartData('^VIX', days);
+  const { labels, data } = remote ?? genVIX(days); // fallback: 시뮬레이션
+
   const grad = ctx.createLinearGradient(0, 0, 0, 180);
   grad.addColorStop(0, 'rgba(244,63,94,0.15)');
   grad.addColorStop(1, 'rgba(244,63,94,0)');
@@ -695,23 +722,22 @@ function drawVIX(days) {
         pointHoverBackgroundColor: '#f43f5e'
       }]
     },
-    // FIX: 원본 코드의 annotation spread 패턴은 plugins를 덮어씌워 tooltip이 손실됨 → chartOpts() 직접 사용
     options: chartOpts()
   });
 }
 
-function switchTab(btn, chartKey, days) {
+async function switchTab(btn, chartKey, days) {
   btn.closest('.chart-tabs')
     .querySelectorAll('.chart-tab')
     .forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  if (chartKey === 'sp') drawSP(days);
-  if (chartKey === 'vix') drawVIX(days);
+  if (chartKey === 'sp') await drawSP(days);
+  if (chartKey === 'vix') await drawVIX(days);
 }
 
 // FIX: 차트 DOM을 매번 재생성하지 않고, 최초 1회만 구조 빌드 → 이후 drawSP/drawVIX만 호출
 let chartsBuilt = false;
-function buildCharts() {
+async function buildCharts() {
   const g = document.getElementById('chart-grid');
   if (!chartsBuilt) {
     g.innerHTML = `
@@ -745,8 +771,7 @@ function buildCharts() {
   </div>`;
     chartsBuilt = true;
   }
-  drawSP(30);
-  drawVIX(30);
+  await Promise.all([drawSP(30), drawVIX(30)]);
 }
 
 // ────────── CACHE & RELOAD ──────────
@@ -802,6 +827,7 @@ async function simulateFetch(section) {
           }
         };
         updateFredItem("미국 10Y", apiData.us10y);
+        updateFredItem("미국 2Y", apiData.us2y);
         updateFredItem("장단기금리차", apiData.spread);
         updateFredItem("연준 기준금리", apiData.fedfunds);
 
@@ -826,6 +852,16 @@ async function simulateFetch(section) {
           updateYahooItem("코스피", apiData.market.kospi);
           updateYahooItem("코스닥", apiData.market.kosdaq);
           updateYahooItem("비트코인", apiData.market.btc);
+        }
+
+        // 공포탐욕 실시간 반영 (CNN Fear & Greed)
+        if (apiData.fearGreed !== null && apiData.fearGreed !== undefined) {
+          const fg = apiData.fearGreed;
+          const fgLabel = fg <= 25 ? '극단 공포' : fg <= 45 ? '공포' : fg <= 55 ? '중립' : fg <= 75 ? '탐욕' : '극단 탐욕';
+          const idx = MOCK_MARKET.findIndex(m => m.label === '공포탐욕');
+          const fgItem = { label: '공포탐욕', value: String(fg), change: '', raw: fg - 50, sub: `CNN · ${fgLabel}` };
+          if (idx > -1) MOCK_MARKET[idx] = fgItem;
+          else MOCK_MARKET.push(fgItem);
         }
       }
     }
@@ -937,11 +973,12 @@ async function reloadSection(section) {
 // FIX: 차트 전용 reload
 async function reloadCharts() {
   setBtnState('btn-chart', true);
-  await new Promise(r => setTimeout(r, 300));
-  buildCharts();
-  const now = new Date();
-  setTs('ts-chart', now, false);
-  setBtnState('btn-chart', false);
+  try {
+    await buildCharts();
+    setTs('ts-chart', new Date(), false);
+  } finally {
+    setBtnState('btn-chart', false);
+  }
 }
 
 // FIX: reloadAll — try/finally로 스피너 반드시 해제 보장
@@ -958,11 +995,7 @@ async function reloadAll() {
   CACHE.market = CACHE.prob = CACHE.news = 0;
 
   try {
-    await Promise.all([
-      simulateFetch('market'),
-      simulateFetch('prob'),
-      simulateFetch('news'),
-    ]);
+    await simulateFetch();
 
     const now = Date.now();
     CACHE.market = CACHE.prob = CACHE.news = now;
@@ -995,11 +1028,7 @@ async function initApp() {
   });
   setBtnState('btn-chart', true);
 
-  await Promise.all([
-    simulateFetch('market'),
-    simulateFetch('prob'),
-    simulateFetch('news'),
-  ]);
+  await simulateFetch();
 
   const now = Date.now();
   CACHE.market = CACHE.prob = CACHE.news = now;
@@ -1017,6 +1046,7 @@ async function initApp() {
     setBtnState(`btn-${s}`, false);
   });
   setTs('ts-chart', d, false);
+  setBtnState('btn-chart', false);
   document.getElementById('ts-val').textContent = fmtTs(d);
 }
 
